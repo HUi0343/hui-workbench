@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>慧上岸版工作台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- PWA 配置 -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#6b8e5a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="慧上岸">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<style>
+  :root {
+    --bg: #f5f1e8;
+    --bg-card: #fffdf7;
+    --bg-hover: #ede7d6;
+    --bg-input: #faf6ec;
+    --border: #e0d8c4;
+    --border-light: #c9bfa5;
+    --text: #4a4438;
+    --text-dim: #8a7f6a;
+    --text-muted: #b0a48f;
+    --primary: #6b8e5a;
+    --primary-dim: #557a45;
+    --success: #5a9e6e;
+    --warning: #c89545;
+    --danger: #c4654a;
+    --purple: #8a6daa;
+    --pink: #c4708a;
+    --cyan: #5a9aa8;
+    --orange: #d18445;
+    --sidebar-w: 220px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; display: flex; }
+
+  /* ===== 左侧导航（App 风格）===== */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo .logo {
+    font-size: 17px; font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    display: block;
+  }
+  .sidebar-logo .sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px;
+  }
+  .nav-group-title {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 12px 8px;
+    font-weight: 600;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 14px;
+    transition: all 0.15s;
+    margin-bottom: 3px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-item.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(107,142,90,0.25); }
+  .nav-item .icon { font-size: 17px; flex-shrink: 0; width: 22px; text-align: center; }
+  .nav-item .badge-count {
+    margin-left: auto;
+    font-size: 10px;
+    background: var(--danger);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+  }
+  .nav-item.active .badge-count { background: rgba(255,255,255,0.3); }
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ===== 主区域 ===== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* 顶部数据概览 */
+  .topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar-stats {
+    display: flex;
+    gap: 32px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+  }
+  .topbar-stats::-webkit-scrollbar { display: none; }
+  .top-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+  .top-stat .lbl { font-size: 11px; color: var(--text-dim); }
+  .top-stat .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .top-stat .val.primary { color: var(--primary); }
+  .top-stat .val.success { color: var(--success); }
+  .top-stat .val.warning { color: var(--warning); }
+  .top-stat .val.danger { color: var(--danger); }
+  .top-stat .val.purple { color: var(--purple); }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .clock { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .countdown-box {
+    display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+    background: linear-gradient(135deg, rgba(196,101,74,0.12), rgba(138,109,170,0.12));
+    border: 1px solid rgba(196,101,74,0.3); border-radius: 8px;
+  }
+  .countdown-label { font-size: 11px; color: var(--text-dim); }
+  .countdown-num { font-size: 20px; font-weight: 700; color: var(--danger); }
+  .countdown-unit { font-size: 11px; color: var(--text-dim); }
+
+  .content { padding: 22px 28px; flex: 1; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* 卡片 */
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border-color 0.2s; }
+  .card:hover { border-color: var(--border-light); }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .card-title-left { display: flex; align-items: center; gap: 8px; }
+  .card-icon { font-size: 16px; }
+  .card-action { font-size: 12px; color: var(--primary); cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+  .card-action:hover { background: var(--bg-hover); }
+
+  /* 今日 */
+  .today-hero { background: linear-gradient(135deg, rgba(107,142,90,0.08), rgba(138,109,170,0.08)); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+  .today-hero h2 { font-size: 22px; margin-bottom: 6px; }
+  .phase-tag { display: inline-block; font-size: 12px; padding: 3px 12px; border-radius: 12px; background: rgba(107,142,90,0.2); color: var(--primary); font-weight: 600; margin-bottom: 10px; }
+  .summary { color: var(--text-dim); font-size: 13px; }
+  .alert-box { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); border-radius: 8px; padding: 10px 14px; margin-top: 12px; font-size: 13px; color: var(--danger); }
+
+  .timeline { display: flex; flex-direction: column; gap: 8px; }
+  .tl-item { display: flex; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--border); transition: all 0.2s; }
+  .tl-item.done { opacity: 0.55; }
+  .tl-item.done .tl-content { text-decoration: line-through; }
+  .tl-check { width: 20px; height: 20px; border: 2px solid var(--border-light); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; transition: all 0.2s; }
+  .tl-check.done { background: var(--success); border-color: var(--success); }
+  .tl-check.done::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+  .tl-time { font-size: 12px; font-weight: 700; color: var(--primary); min-width: 78px; font-variant-numeric: tabular-nums; }
+  .tl-content { flex: 1; }
+  .tl-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .tl-desc { font-size: 12px; color: var(--text-dim); }
+  .tl-cat { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 4px; }
+  .cat-study { background: rgba(124,158,255,0.15); color: var(--primary); }
+  .cat-sport { background: rgba(74,222,128,0.15); color: var(--success); }
+  .cat-skill { background: rgba(244,114,182,0.15); color: var(--pink); }
+  .cat-life { background: rgba(251,191,36,0.15); color: var(--warning); }
+
+  .phase-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .phase-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; border-left: 3px solid var(--primary); }
+  .phase-card.p2 { border-left-color: var(--success); }
+  .phase-card.p3 { border-left-color: var(--warning); }
+  .phase-card.p4 { border-left-color: var(--danger); }
+  .phase-card.active { box-shadow: 0 0 0 2px var(--primary); }
+  .phase-name { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .phase-date { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .phase-focus { font-size: 13px; font-weight: 600; }
+
+  /* 通用 */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+  .btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dim); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .info-item { background: var(--bg-input); border-radius: 8px; padding: 12px; border-left: 3px solid var(--primary); }
+  .info-item .lbl { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+  .info-item .val { font-size: 15px; font-weight: 600; }
+
+  /* 表格 */
+  .plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .plan-table th { text-align: left; padding: 10px 12px; background: var(--bg-input); color: var(--text-dim); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .plan-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .plan-table tr:hover td { background: var(--bg-hover); }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .b-blue { background: rgba(124,158,255,0.15); color: var(--primary); }
+  .b-green { background: rgba(74,222,128,0.15); color: var(--success); }
+  .b-yellow { background: rgba(251,191,36,0.15); color: var(--warning); }
+  .b-purple { background: rgba(192,132,252,0.15); color: var(--purple); }
+  .b-pink { background: rgba(244,114,182,0.15); color: var(--pink); }
+  .b-cyan { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .b-danger { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .plan-section { margin-bottom: 22px; }
+  .plan-section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  .tip-box { background: rgba(107,142,90,0.08); border: 1px solid rgba(107,142,90,0.2); border-radius: 8px; padding: 14px; margin-top: 12px; font-size: 13px; color: var(--text-dim); }
+  .tip-box strong { color: var(--text); }
+  .tip-box ul { margin: 6px 0 0 18px; }
+  .tip-box li { margin: 3px 0; }
+  .tip-box.warn { background: rgba(200,149,69,0.08); border-color: rgba(200,149,69,0.25); }
+
+  /* 看板 */
+  .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.c1::before { background: var(--primary); }
+  .stat-card.c2::before { background: var(--success); }
+  .stat-card.c3::before { background: var(--warning); }
+  .stat-card.c4::before { background: var(--purple); }
+  .stat-label { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .stat-value.primary { color: var(--primary); }
+  .stat-value.success { color: var(--success); }
+  .stat-value.warning { color: var(--warning); }
+  .stat-value.purple { color: var(--purple); }
+  .chart-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .chart-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-wrap { position: relative; height: 240px; }
+
+  /* 待办 */
+  .todo-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .todo-input-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .todo-input { flex: 1; min-width: 160px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; outline: none; }
+  .todo-input:focus { border-color: var(--primary); }
+  .todo-select { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; color: var(--text); font-size: 12px; outline: none; cursor: pointer; }
+  .todo-filter { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { padding: 4px 12px; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 12px; transition: all 0.2s; }
+  .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .filter-btn:hover:not(.active) { border-color: var(--border-light); color: var(--text); }
+  .todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; transition: background 0.15s; border: 1px solid transparent; }
+  .todo-item:hover { background: var(--bg-hover); }
+  .todo-check { width: 18px; height: 18px; border: 2px solid var(--border-light); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .todo-check.done { background: var(--success); border-color: var(--success); }
+  .todo-check.done::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+  .todo-text { flex: 1; font-size: 13px; }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-muted); }
+  .todo-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .tag-subject1 { background: rgba(124,158,255,0.15); color: var(--primary); }
+  .tag-subject2 { background: rgba(192,132,252,0.15); color: var(--purple); }
+  .tag-life { background: rgba(74,222,128,0.15); color: var(--success); }
+  .tag-other { background: rgba(138,147,163,0.15); color: var(--text-dim); }
+  .tag-priority { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+  .p-high { background: rgba(248,113,113,0.2); color: var(--danger); }
+  .p-mid { background: rgba(251,191,36,0.2); color: var(--warning); }
+  .p-low { background: rgba(138,147,163,0.15); color: var(--text-dim); }
+  .todo-delete { color: var(--text-muted); cursor: pointer; padding: 4px; opacity: 0; transition: opacity 0.2s, color 0.2s; font-size: 14px; }
+  .todo-item:hover .todo-delete { opacity: 1; }
+  .todo-delete:hover { color: var(--danger); }
+  .progress-ring-wrap { display: flex; align-items: center; justify-content: center; padding: 12px; }
+  .progress-info { text-align: center; margin-top: 8px; }
+  .progress-info .num { font-size: 22px; font-weight: 700; color: var(--primary); }
+  .progress-info .lbl { font-size: 12px; color: var(--text-dim); }
+
+  /* 日历 */
+  .calendar-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+  .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .calendar-nav { display: flex; align-items: center; gap: 12px; }
+  .cal-nav-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .cal-nav-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .cal-title { font-size: 15px; font-weight: 600; min-width: 130px; text-align: center; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-name { text-align: center; font-size: 11px; color: var(--text-muted); padding: 6px 0; font-weight: 600; }
+  .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text); transition: all 0.15s; border: 1px solid transparent; position: relative; }
+  .cal-day:hover { background: var(--bg-hover); }
+  .cal-day.other-month { color: var(--text-muted); opacity: 0.4; }
+  .cal-day.today { background: var(--primary); color: #fff; font-weight: 700; }
+  .cal-day.selected { border-color: var(--primary); }
+  .cal-day.has-event::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--warning); }
+  .cal-day.today.has-event::after { background: #fff; }
+  .event-list { display: flex; flex-direction: column; gap: 8px; }
+  .event-item { background: var(--bg-input); border-left: 3px solid var(--primary); border-radius: 6px; padding: 10px 12px; }
+  .event-item .ev-time { font-size: 11px; color: var(--primary); font-weight: 600; margin-bottom: 2px; }
+  .event-item .ev-title { font-size: 13px; }
+  .event-item .ev-del { float: right; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+  .event-item .ev-del:hover { color: var(--danger); }
+  .event-empty { text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 13px; }
+  .event-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+
+  /* 习惯 */
+  .habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .habit-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .habit-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .habit-name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .habit-streak { font-size: 12px; padding: 3px 10px; border-radius: 12px; background: rgba(251,191,36,0.15); color: var(--warning); font-weight: 600; }
+  .habit-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
+  .habit-day { aspect-ratio: 1; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); transition: all 0.15s; }
+  .habit-day .dn { font-size: 11px; font-weight: 600; margin-bottom: 2px; }
+  .habit-day.done { background: var(--success); color: #fff; border-color: var(--success); }
+  .habit-day.done .dn { color: #fff; }
+  .habit-day.today { border-color: var(--primary); }
+  .habit-day.future { opacity: 0.4; cursor: not-allowed; }
+  .habit-stat { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); padding-top: 10px; border-top: 1px solid var(--border); }
+
+  /* 游泳任务 */
+  .resource-step { display: flex; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--primary); }
+  .resource-step .step-num { font-size: 18px; font-weight: 700; color: var(--primary); min-width: 28px; }
+  .resource-step .step-content { flex: 1; }
+  .resource-step .step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .resource-step .step-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .resource-tip { background: rgba(74,222,128,0.08); border-left: 3px solid var(--success); border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 13px; }
+  .resource-tip strong { color: var(--success); }
+
+  /* 作息 */
+  .sleep-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .sleep-form { display: flex; flex-direction: column; gap: 14px; }
+  .sleep-field { display: flex; flex-direction: column; gap: 6px; }
+  .sleep-field label { font-size: 12px; color: var(--text-dim); }
+  .sleep-input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; outline: none; }
+  .sleep-input:focus { border-color: var(--primary); }
+  .sleep-target { background: var(--bg-input); border-radius: 8px; padding: 14px; margin-top: 8px; }
+  .sleep-target h4 { font-size: 13px; margin-bottom: 8px; color: var(--text-dim); }
+  .target-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .target-row span:last-child { color: var(--success); font-weight: 600; }
+
+  /* 笔记 */
+  .notes-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; height: calc(100vh - 200px); }
+  .notes-sidebar { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+  .note-item { padding: 12px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+  .note-item:hover { border-color: var(--border-light); }
+  .note-item.active { border-color: var(--primary); background: rgba(107,142,90,0.08); }
+  .note-item-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-item-preview { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-item-date { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .notes-main { display: flex; flex-direction: column; gap: 10px; }
+  .note-title-input { background: transparent; border: none; color: var(--text); font-size: 20px; font-weight: 700; outline: none; padding: 4px 0; }
+  .note-title-input::placeholder { color: var(--text-muted); }
+  .note-meta { font-size: 11px; color: var(--text-muted); }
+  .note-content { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px; color: var(--text); font-size: 14px; line-height: 1.7; outline: none; resize: none; font-family: inherit; }
+  .note-content:focus { border-color: var(--primary); }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    /* 手机端：导航在顶部，紧凑可滚动 */
+    .sidebar {
+      width: 100%;
+      height: auto;
+      max-height: 42vh;
+      position: relative;
+      top: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sidebar-logo { padding: 12px 16px; }
+    .sidebar-logo .logo { font-size: 16px; }
+    .sidebar-logo .sub { font-size: 10px; }
+    .sidebar-nav {
+      padding: 6px 8px;
+      max-height: calc(42vh - 60px);
+    }
+    .nav-item { padding: 10px 14px; font-size: 14px; }
+    .nav-item .icon { font-size: 17px; width: 22px; }
+    .nav-group-title { padding: 10px 12px 4px; font-size: 10px; }
+    .sidebar-footer { display: none; }
+    /* 顶部数据概览：手机端横滑 */
+    .topbar { padding: 10px 14px; position: static; }
+    .topbar-stats { gap: 18px; }
+    .top-stat { min-width: 72px; }
+    .top-stat .lbl { font-size: 10px; }
+    .top-stat .val { font-size: 16px; }
+    .content { padding: 14px; }
+    .card { padding: 16px; }
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { padding: 14px; }
+    .stat-value { font-size: 22px; }
+    .phase-cards { grid-template-columns: 1fr; gap: 8px; }
+    .chart-row, .chart-row-2, .todo-layout, .calendar-layout, .sleep-layout { grid-template-columns: 1fr; }
+    .notes-layout { grid-template-columns: 1fr; height: auto; }
+    .notes-sidebar { max-height: 200px; }
+    .chart-wrap { height: 200px; }
+    .today-hero { padding: 16px; }
+    .today-hero h2 { font-size: 18px; }
+    .tl-item { padding: 10px; gap: 10px; }
+    .tl-time { min-width: 60px; font-size: 11px; }
+    .tl-title { font-size: 13px; }
+    .tl-desc { font-size: 11px; }
+    .plan-table { font-size: 12px; }
+    .plan-table th, .plan-table td { padding: 8px 10px; }
+    .info-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  /* 超窄屏（手机竖屏）进一步优化 */
+  @media (max-width: 480px) {
+    .sidebar-logo .sub { display: none; }
+    .nav-item { font-size: 13px; padding: 9px 12px; }
+    .nav-item .icon { font-size: 16px; }
+    .content { padding: 12px; }
+    .card { padding: 14px; }
+    .dashboard-grid { gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-value { font-size: 20px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .topbar-stats { gap: 14px; }
+    .top-stat { min-width: 64px; }
+    .top-stat .val { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 左侧导航 -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo">慧上岸版工作台</span>
+    <div class="sub">教资冲刺 · 减脂 · 成长</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group-title">计划</div>
+    <button class="nav-item active" data-view="plan"><span class="icon">📋</span>总计划</button>
+    <button class="nav-item" data-view="today"><span class="icon">📍</span>今日计划</button>
+    <button class="nav-item" data-view="todo"><span class="icon">✅</span>待办清单<span class="badge-count" id="nav-todo-count">0</span></button>
+    <button class="nav-item" data-view="calendar"><span class="icon">📅</span>日程日历</button>
+
+    <div class="nav-group-title">专项</div>
+    <button class="nav-item" data-view="swim"><span class="icon">🏊</span>游泳任务</button>
+    <button class="nav-item" data-view="pilates"><span class="icon">🧘</span>运动 & 普拉提</button>
+    <button class="nav-item" data-view="resource"><span class="icon">📚</span>教程资源</button>
+
+    <div class="nav-group-title">追踪</div>
+    <button class="nav-item" data-view="dashboard"><span class="icon">📊</span>数据看板</button>
+    <button class="nav-item" data-view="habit"><span class="icon">🔥</span>习惯打卡</button>
+    <button class="nav-item" data-view="sleep"><span class="icon">😴</span>作息记录</button>
+    <button class="nav-item" data-view="notes"><span class="icon">📝</span>笔记</button>
+  </nav>
+  <div class="sidebar-footer">慧上岸 · 数据本地存储</div>
+</aside>
+
+<!-- 主区域 -->
+<div class="main">
+  <!-- 顶部数据概览 -->
+  <div class="topbar">
+    <div class="topbar-stats">
+      <div class="top-stat"><div class="lbl">教资倒计时</div><div class="val danger" id="top-countdown">-- 天</div></div>
+      <div class="top-stat"><div class="lbl">今日待办</div><div class="val primary" id="top-todo">0/0</div></div>
+      <div class="top-stat"><div class="lbl">本周学习</div><div class="val success" id="top-study">0h</div></div>
+      <div class="top-stat"><div class="lbl">习惯打卡</div><div class="val warning" id="top-streak">0 天</div></div>
+      <div class="top-stat"><div class="lbl">当前阶段</div><div class="val purple" id="top-phase">阶段一</div></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- 今日计划 -->
+    <div class="view" id="view-today">
+      <div class="today-hero">
+        <span class="phase-tag" id="phase-tag">阶段一 · 基础冲刺</span>
+        <h2 id="today-title">今日计划</h2>
+        <div class="summary" id="today-summary"></div>
+        <div class="alert-box" id="today-alert" style="display:none"></div>
+      </div>
+      <div class="phase-cards" id="phase-cards"></div>
+      <div class="card">
+        <div class="card-title">
+          <span class="card-title-left"><span class="card-icon">⏰</span>今日时间轴</span>
+          <span class="card-action" id="today-reset">重置打卡</span>
+        </div>
+        <div class="timeline" id="today-timeline"></div>
+      </div>
+    </div>
+
+    <!-- 看板 -->
+    <div class="view" id="view-dashboard">
+      <div class="dashboard-grid">
+        <div class="stat-card c1"><div class="stat-label">今日待办</div><div class="stat-value primary" id="stat-todo-today">0</div><div class="stat-sub" id="stat-todo-sub">已完成 0</div></div>
+        <div class="stat-card c2"><div class="stat-label">本周学习时长</div><div class="stat-value success" id="stat-study-week">0h</div><div class="stat-sub" id="stat-study-sub">目标 28h</div></div>
+        <div class="stat-card c3"><div class="stat-label">习惯连续打卡</div><div class="stat-value warning" id="stat-streak">0天</div><div class="stat-sub" id="stat-streak-sub">继续保持</div></div>
+        <div class="stat-card c4"><div class="stat-label">作息达成率</div><div class="stat-value purple" id="stat-sleep">0%</div><div class="stat-sub" id="stat-sleep-sub">目标 23:00睡 / 7:30起</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="card"><div class="card-title"><span class="card-title-left"><span class="card-icon">📈</span>近 14 天学习时长</span></div><div class="chart-wrap"><canvas id="chart-study"></canvas></div></div>
+        <div class="card"><div class="card-title"><span class="card-title-left"><span class="card-icon">📚</span>科目分布</span></div><div class="chart-wrap"><canvas id="chart-subject"></canvas></div></div>
+        <div class="card"><div class="card-title"><span class="card-title-left"><span class="card-icon">🔥</span>习惯完成率</span></div><div class="chart-wrap"><canvas id="chart-habit"></canvas></div></div>
+      </div>
+      <div class="chart-row-2">
+        <div class="card"><div class="card-title"><span class="card-title-left"><span class="card-icon">😴</span>近 14 天作息趋势</span></div><div class="chart-wrap" style="height:220px"><canvas id="chart-sleep"></canvas></div></div>
+        <div class="card"><div class="card-title"><span class="card-title-left"><span class="card-icon">🎯</span>本周任务完成情况</span></div><div class="chart-wrap" style="height:220px"><canvas id="chart-todo"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- 总计划 -->
+    <div class="view active" id="view-plan">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">👤</span>我的档案</span></div>
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">考试</div><div class="val">教资（中学 计算机）</div></div>
+          <div class="info-item"><div class="lbl">考试日期</div><div class="val">2026/9/12（周六）</div></div>
+          <div class="info-item"><div class="lbl">报考科目</div><div class="val">科一综合素质 + 科二教育知识与能力</div></div>
+          <div class="info-item"><div class="lbl">考试地点</div><div class="val">江西赣州</div></div>
+          <div class="info-item"><div class="lbl">科一进度</div><div class="val">已学完 → 转背诵</div></div>
+          <div class="info-item"><div class="lbl">科二进度</div><div class="val">学到第4章 中学生学习心理</div></div>
+          <div class="info-item"><div class="lbl">教材</div><div class="val">粉笔教资系统班</div></div>
+          <div class="info-item"><div class="lbl">身高/体重</div><div class="val">163cm / 62.5kg</div></div>
+          <div class="info-item"><div class="lbl">体脂率</div><div class="val">33.6%</div></div>
+          <div class="info-item"><div class="lbl">减脂目标</div><div class="val">3个月 → 28%</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📚</span>教资备考总计划</span></div>
+        <div class="plan-section">
+          <div class="plan-section-title">🗓️ 四阶段冲刺（7/25 - 9/12，共 49 天）</div>
+          <table class="plan-table">
+            <thead><tr><th>阶段</th><th>时间</th><th>天数</th><th>核心任务</th><th>每日时长</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge b-blue">阶段一</span> 基础冲刺</td><td>7/25 - 8/10</td><td>17天</td><td>科二学完剩余章节 + 科一开始背知识点 + 每日刷题</td><td>科二3h + 科一1.5h</td></tr>
+              <tr><td><span class="badge b-green">阶段二</span> 强化刷题</td><td>8/11 - 8/31</td><td>21天</td><td>科二全章复习 + 大量刷题 + 主观题背诵</td><td>科二2.5h + 科一2h + 刷题1h</td></tr>
+              <tr><td><span class="badge b-yellow">阶段三</span> 真题模拟</td><td>9/1 - 9/7</td><td>7天</td><td>近5年真题套卷 + 错题复盘 + 查漏补缺</td><td>套卷3h + 复盘1.5h</td></tr>
+              <tr><td><span class="badge b-purple">阶段四</span> 考前冲刺</td><td>9/8 - 9/11</td><td>4天</td><td>押题背诵 + 高频考点 + 调整心态作息</td><td>背诵3h + 保温1h</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">📗 科二（粉笔教材章节顺序）—— 已学到第4章</div>
+          <table class="plan-table">
+            <thead><tr><th>章节</th><th>主题</th><th>状态</th><th>完成时间</th><th>重点提示</th></tr></thead>
+            <tbody>
+              <tr><td>第1章</td><td>教育基础知识</td><td><span class="badge b-green">已学</span></td><td>已过</td><td>每周回顾1次</td></tr>
+              <tr><td>第2章</td><td>中学课程</td><td><span class="badge b-green">已学</span></td><td>已过</td><td>每周回顾1次</td></tr>
+              <tr><td>第3章</td><td>中学教学</td><td><span class="badge b-green">已学</span></td><td>已过</td><td>每周回顾1次</td></tr>
+              <tr><td><strong>第4章</strong></td><td><strong>中学生学习心理</strong></td><td><span class="badge b-yellow">进行中</span></td><td>7/30前</td><td>心理学核心，<strong>必考材料分析题</strong></td></tr>
+              <tr><td>第5章</td><td>中学生发展心理</td><td><span class="badge b-purple">高频</span></td><td>8/4前</td><td>认知/人格/情绪/社会性发展</td></tr>
+              <tr><td>第6章</td><td>中学生心理辅导</td><td><span class="badge b-yellow">中频</span></td><td>8/7前</td><td>常见心理问题与辅导方法</td></tr>
+              <tr><td>第7章</td><td>中学德育</td><td><span class="badge b-purple">高频</span></td><td>8/10前</td><td>德育规律+原则+方法，材料题必考</td></tr>
+              <tr><td>第8章</td><td>中学班级管理与教师心理</td><td><span class="badge b-yellow">中频</span></td><td>8/13前</td><td>班主任工作 + 教师专业发展</td></tr>
+            </tbody>
+          </table>
+          <div class="tip-box">
+            <strong>📌 第4章 "中学生学习心理" 是重中之重：</strong>
+            <ul>
+              <li>科二的<b>材料分析题</b>，基本年年考心理学相关</li>
+              <li>包含：学习的认知基础（感觉/知觉/记忆/思维）、学习理论（行为/认知/建构/人本）、学习动机、学习策略、学习迁移</li>
+              <li>学习理论中"班杜拉的观察学习理论""人本主义学习理论""认知-结构学习理论"是历年材料题高频</li>
+              <li>建议每学完一节做粉笔配套章节练习题，错题标记</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">📘 科一（综合素质）—— 已学完，转入"背诵+刷题"</div>
+          <table class="plan-table">
+            <thead><tr><th>模块</th><th>重点</th><th>建议安排</th></tr></thead>
+            <tbody>
+              <tr><td>职业理念</td><td><strong>必考材料分析题</strong>：教育观/学生观/教师观</td><td>阶段一背完，每天背1个</td></tr>
+              <tr><td>教师职业道德</td><td>《中小学教师职业道德规范》材料题高频</td><td>阶段二背</td></tr>
+              <tr><td>教育法律法规</td><td>《教育法》《教师法》《义务教育法》《未成年人保护法》《预防未成年人犯罪法》</td><td>阶段一-二，碎片时间</td></tr>
+              <tr><td>文化素养</td><td>历史/文学/科技/艺术常识</td><td>每日20题刷题</td></tr>
+              <tr><td>基本能力</td><td>逻辑推理/信息处理/阅读理解 + <strong>作文 50 分</strong></td><td>阶段二-三突击作文模板</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🏃</span>减脂 + 运动计划</span></div>
+        <div class="plan-section">
+          <div class="plan-section-title">📊 身体数据与目标</div>
+          <table class="plan-table">
+            <thead><tr><th>指标</th><th>当前</th><th>1个月目标</th><th>3个月目标</th></tr></thead>
+            <tbody>
+              <tr><td>体重</td><td>62.5 kg / 125斤</td><td>61 kg</td><td>58-60 kg</td></tr>
+              <tr><td>体脂率</td><td>33.6%</td><td>31%</td><td>28% 左右</td></tr>
+              <tr><td>腰围</td><td>建议测量记录</td><td>-3cm</td><td>-8cm</td></tr>
+            </tbody>
+          </table>
+          <div class="tip-box">
+            <strong>🎯 核心原则：</strong>BMI 正常但体脂高 = 肌肉少脂肪多，不要节食！
+            <ul>
+              <li><strong>饮食</strong>：高蛋白（鸡蛋/鸡胸/鱼/豆腐），粗粮代替精制碳水，戒含糖饮料</li>
+              <li><strong>运动</strong>：居家普拉提 + 游泳（例假后开始）+ 力量训练</li>
+              <li><strong>不天天称体重</strong>，每周一次同时间，同时量腰围/腿围</li>
+              <li><strong>例假期</strong>：避免剧烈运动和入水，多做拉伸和呼吸练习</li>
+            </ul>
+          </div>
+        </div>
+        <div class="plan-section">
+          <div class="plan-section-title">📅 每周运动安排（例假后启用游泳）</div>
+          <table class="plan-table">
+            <thead><tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>居家普拉提<br><span class="badge b-green">30min</span></td>
+                <td>居家力量<br><span class="badge b-green">30min</span></td>
+                <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+                <td>居家普拉提<br><span class="badge b-green">30min</span></td>
+                <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+                <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+                <td>拉伸休息<br><span class="badge b-yellow">轻松</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="tip-box warn">
+            <strong>⚠️ 当前状态（7/26）：例假第3天</strong>
+            <ul>
+              <li>游泳暂停，例假结束后第7天再开始（预计 8/3 起）</li>
+              <li>例假期以<strong>拉伸 + 呼吸练习 + 散步</strong>为主，不剧烈运动</li>
+              <li>普拉提选温和动作，避免倒立和腹部挤压</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">💄</span>化妆学习计划</span></div>
+        <table class="plan-table">
+          <thead><tr><th>阶段</th><th>时间</th><th>目标</th><th>练习内容</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-pink">第1周</span></td><td>7/25 - 7/31</td><td>认识工具产品</td><td>了解刷具/粉底/遮瑕，买齐基础款</td></tr>
+            <tr><td><span class="badge b-pink">第2-3周</span></td><td>8/1 - 8/14</td><td>底妆+眉毛</td><td>这两样搞定就成功一半</td></tr>
+            <tr><td><span class="badge b-pink">第4-5周</span></td><td>8/15 - 8/28</td><td>眼妆基础</td><td>大地色眼影、内眼线、夹睫毛</td></tr>
+            <tr><td><span class="badge b-pink">第6周+</span></td><td>8/29+</td><td>唇妆+整体</td><td>唇形、整体配色、完整妆容</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">😴</span>作息调整计划</span></div>
+        <table class="plan-table">
+          <thead><tr><th>阶段</th><th>时间</th><th>入睡</th><th>起床</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-yellow">当前</span></td><td>7/25 - 7/28</td><td>凌晨1:00</td><td>9:00</td></tr>
+            <tr><td><span class="badge b-yellow">过渡1</span></td><td>7/29 - 8/4</td><td>0:30</td><td>8:30</td></tr>
+            <tr><td><span class="badge b-yellow">过渡2</span></td><td>8/5 - 8/11</td><td>23:30</td><td>8:00</td></tr>
+            <tr><td><span class="badge b-green">目标</span></td><td>8/12起</td><td>23:00</td><td>7:30</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 游泳任务 -->
+    <div class="view" id="view-swim">
+      <div class="alert-box" id="swim-alert" style="margin-bottom:16px"></div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🌬️</span>第一步：先把憋气学会（你目前的痛点）</span></div>
+        <div class="tip-box">
+          <strong>🎯 你的核心问题：</strong>鼻子会呼气，但嘴巴不会吸气。这其实非常正常！
+          正确的游泳呼吸节奏是：<strong>水上用嘴吸气 → 水下用鼻子呼气</strong>。你现在只差"嘴巴吸气"这一环。
+        </div>
+        <div class="plan-section">
+          <div class="plan-section-title">📖 呼吸原理（先理解再练）</div>
+          <table class="plan-table">
+            <thead><tr><th>环节</th><th>用什么</th><th>为什么</th></tr></thead>
+            <tbody>
+              <tr><td>水上吸气</td><td><strong>嘴巴</strong></td><td>嘴巴张口大，能在 0.5 秒内吸足气；用鼻子吸容易呛水</td></tr>
+              <tr><td>水下呼气</td><td><strong>鼻子</strong></td><td>鼻呼气能避免水灌进鼻子；水流过鼻腔不会呛</td></tr>
+              <tr><td>过渡瞬间</td><td>口鼻协调</td><td>出水那一下嘴先开吸气，不要犹豫</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">🏠 居家练习步骤（不入水也能练，每天5分钟）</div>
+          <div class="resource-step"><div class="step-num">1</div><div class="step-content"><div class="step-title">脸盆练习：先建立嘴巴吸气的感觉</div><div class="step-desc">装一脸盆温水，深呼吸放松。先用鼻子正常呼气，然后<strong>张大嘴巴"啊——"地吸一口气</strong>（像吃惊时倒吸一口气那样），感受空气从嘴巴进入。重复 10 次，直到嘴巴吸气变得自然。</div></div></div>
+          <div class="resource-step"><div class="step-num">2</div><div class="step-content"><div class="step-title">脸盆入水：鼻子呼气</div><div class="step-desc">嘴巴吸足气后，<strong>脸埋进水里</strong>，用鼻子缓慢吐气（你会看到水里冒泡泡）。吐气要慢，能持续 4-6 秒。重复 10 次。</div></div></div>
+          <div class="resource-step"><div class="step-num">3</div><div class="step-content"><div class="step-title">完整循环：嘴吸 → 入水鼻呼 → 出水嘴吸</div><div class="step-desc">嘴巴吸气 → 脸入水鼻子呼气 → 出水瞬间<strong>立刻张嘴吸气</strong>（不要犹豫，不要用鼻子吸）。刚开始可以慢一点，稳定后加快节奏。连续做 20 次为一组，每天 3 组。</div></div></div>
+          <div class="resource-step"><div class="step-num">4</div><div class="step-content"><div class="step-title">关键感觉：出水那一刻</div><div class="step-desc">出水时嘴巴张开的瞬间应该是<strong>"啪"地一声</strong>，像鱼跃出水面的感觉。不要小心翼翼，越犹豫越容易呛。记住：<strong>出水即张嘴</strong>。</div></div></div>
+        </div>
+        <div class="tip-box warn">
+          <strong>⚠️ 常见错误（你可能会遇到）：</strong>
+          <ul>
+            <li><strong>错误1</strong>：水下用嘴巴呼气 → 嘴巴张开会进水。正确：<strong>水下只用鼻子呼</strong></li>
+            <li><strong>错误2</strong>：出水时用鼻子吸气 → 容易把水珠吸进鼻腔，超难受。正确：<strong>出水只用嘴吸</strong></li>
+            <li><strong>错误3</strong>：吸气太浅 → 下一轮憋不住。正确：<strong>张大嘴深吸</strong></li>
+            <li><strong>错误4</strong>：紧张时屏气 → 反而更慌。正确：<strong>水下持续缓慢呼气</strong>，呼完自然想吸</li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <strong>💡 你的优势：</strong>你"鼻子呼气"已经会了，这其实是更难的部分！现在只需要练"嘴巴吸气"，比完全从零开始的人快很多。<strong>坚持脸盆练习 3-5 天</strong>，再去泳池就会顺很多。
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📺</span>推荐学习资源（B站/抖音搜索关键词）</span></div>
+        <table class="plan-table">
+          <thead><tr><th>搜索关键词</th><th>能学到什么</th><th>推荐</th></tr></thead>
+          <tbody>
+            <tr><td>"游泳 憋气 教学"</td><td>憋气基础 + 呼吸节奏</td><td>抖音短视频，3分钟看懂</td></tr>
+            <tr><td>"游泳 嘴吸鼻呼"</td><td>解决你的核心问题</td><td>B站有详细分解</td></tr>
+            <tr><td>"零基础游泳 第一课"</td><td>水感适应系列</td><td>B站系统教程</td></tr>
+            <tr><td>"蛙泳换气 慢动作"</td><td>换气节奏（进阶）</td><td>学会了憋气再看</td></tr>
+            <tr><td>"游泳 呛水怎么办"</td><td>克服恐惧心理</td><td>新手必看</td></tr>
+          </tbody>
+        </table>
+        <div class="tip-box"><strong>💡 学习顺序：</strong>先看 2-3 个憋气教学视频 → 居家脸盆练习 3 天 → 再去泳池实践。不要直接下水，理论+脸盆练习能省掉你很多恐惧和时间。</div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">
+          <span class="card-title-left"><span class="card-icon">🏊</span>今日游泳任务</span>
+          <span class="card-action" id="swim-complete-all">全部完成</span>
+        </div>
+        <div id="swim-today-tasks"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📅</span>游泳 7 周计划（8/3 起，下午时段）</span></div>
+        <div id="swim-week-plan"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">⚠️</span>游泳注意事项</span></div>
+        <table class="plan-table">
+          <thead><tr><th>必须遵守</th><th>详细</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-danger">安全</span></td><td>不独自游泳、必须有会游泳的人同行</td></tr>
+            <tr><td><span class="badge b-yellow">环境</span></td><td>避开流动水域（湖/河）、只在浅水区学</td></tr>
+            <tr><td><span class="badge b-yellow">天气</span></td><td>恶劣天气、低水温不游泳</td></tr>
+            <tr><td><span class="badge b-blue">饮食</span></td><td>下水前1小时不吃饱、不空腹</td></tr>
+            <tr><td><span class="badge b-blue">装备</span></td><td>泳镜（必备）、泳帽、初学者浮板/背漂、<strong>鼻夹</strong>（初期可用，帮你适应鼻子呼气）</td></tr>
+            <tr><td><span class="badge b-success">时间</span></td><td>下午时段，不要超过1小时</td></tr>
+            <tr><td><span class="badge b-pink">女性</span></td><td>例假期暂停，结束后第7天再开始</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 普拉提居家 -->
+    <div class="view" id="view-pilates">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🧘</span>运动总安排：臀腿专项 + 居家减脂塑形</span></div>
+        <div class="tip-box">
+          <strong>🎯 你的目标：</strong>减脂到正常体脂率（28%左右）+ 瘦肚子 + 练臀。
+          <ul>
+            <li><strong>普拉提臀腿专项课</strong>：一周一次（小班课，主攻臀腿）</li>
+            <li><strong>居家课程</strong>：其余几天在家练，主攻呼吸+瘦肚子+臀</li>
+            <li><strong>游泳</strong>：8/3 起每周一/三/五下午（有氧燃脂）</li>
+            <li><strong>原则</strong>：臀腿专项课那天不练臀，给肌肉恢复时间；其他日子居家练</li>
+          </ul>
+        </div>
+        <table class="plan-table">
+          <thead><tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+              <td>居家瘦腹<br><span class="badge b-green">20min</span></td>
+              <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+              <td><strong>普拉提臀腿课</strong><br><span class="badge b-pink">60min</span></td>
+              <td>游泳（下午）<br><span class="badge b-cyan">45min</span></td>
+              <td>居家练臀<br><span class="badge b-green">25min</span></td>
+              <td>拉伸休息<br><span class="badge b-yellow">轻松</span></td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:center;color:var(--text-dim)">
+                💡 例假期（7/24-7/30）：游泳暂停，普拉提课可上（选温和版），居家改为呼吸+拉伸
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🌬️</span>居家必修：呼吸练习（每天睡前5-10分钟）</span></div>
+        <div class="tip-box">
+          <strong>这是所有运动的基础</strong>，无论今天练什么，睡前都做这个。对你游泳换气也有直接帮助。
+        </div>
+        <table class="plan-table">
+          <thead><tr><th>动作</th><th>时长</th><th>要点</th></tr></thead>
+          <tbody>
+            <tr><td>仰卧腹式呼吸</td><td>5分钟</td><td>仰卧屈膝，手放腹部，鼻吸4秒（腹部隆起）→ 停2秒 → 口呼6秒（腹部下沉）</td></tr>
+            <tr><td>肋间呼吸</td><td>3分钟</td><td>双手放肋骨两侧，鼻吸时肋骨横向打开（不耸肩），口呼收紧</td></tr>
+            <tr><td>四足跪姿呼吸</td><td>2分钟</td><td>四足跪姿，吸气腹部下沉，呼气腹部收紧，背平直</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">💪</span>居家瘦肚子课程（周二做）</span></div>
+        <div class="plan-section">
+          <div class="plan-section-title">📺 推荐跟练（B站/Keep）</div>
+          <table class="plan-table">
+            <thead><tr><th>课程</th><th>时长</th><th>搜索关键词</th><th>特点</th></tr></thead>
+            <tbody>
+              <tr><td>周六野 5分钟马甲线</td><td>5-10min</td><td>B站"周六野 马甲线 入门"</td><td>新手友好，不伤颈椎</td></tr>
+              <tr><td>帕梅拉 腹部训练新手版</td><td>10min</td><td>B站"帕梅拉 腹部 初级"</td><td>节奏明快，强度适中</td></tr>
+              <tr><td>LunaVita 马甲线</td><td>6-12min</td><td>B站"LunaVita 马甲线"</td><td>讲解细致，强调发力感</td></tr>
+              <tr><td>Keep 零基础马甲线</td><td>12min</td><td>Keep App 搜"马甲线 零基础"</td><td>有动作引导和倒计时</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="plan-section">
+          <div class="plan-section-title">🏋️ 自主训练动作（不跟视频时做）</div>
+          <table class="plan-table">
+            <thead><tr><th>动作</th><th>次数</th><th>要点</th></tr></thead>
+            <tbody>
+              <tr><td>死虫式（Dead Bug）</td><td>每侧10次×3组</td><td>仰卧抬腿抬手，对侧手脚交替下放，<strong>腰部始终贴地</strong>，核心发力</td></tr>
+              <tr><td>仰卧卷腹</td><td>15次×3组</td><td>下巴找锁骨不夹脖子，呼气卷起吸气放下</td></tr>
+              <tr><td>俄罗斯转体</td><td>每侧15次×3组</td><td>坐姿身体后倾，双脚离地，左右转体</td></tr>
+              <tr><td>平板支撑</td><td>30秒×3组</td><td>核心收紧，不塌腰不撅臀，呼吸不屏住</td></tr>
+              <tr><td>仰卧交替抬腿</td><td>每侧15次×3组</td><td>仰卧双腿伸直交替抬起，下背贴地</td></tr>
+            </tbody>
+          </table>
+          <div class="tip-box"><strong>💡 关键：</strong>瘦肚子不能只练腹，<strong>饮食控制更重要</strong>。腹部脂肪是最后才减的，坚持 4-6 周才会看到变化。练腹时如果脖子酸，说明发力错了，停一下重新找腹部发力感。</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🍑</span>居家练臀课程（周六做）</span></div>
+        <div class="plan-section">
+          <div class="plan-section-title">📺 推荐跟练（B站）</div>
+          <table class="plan-table">
+            <thead><tr><th>课程</th><th>时长</th><th>搜索关键词</th><th>特点</th></tr></thead>
+            <tbody>
+              <tr><td>蜜桃臀入门训练</td><td>10-15min</td><td>B站"蜜桃臀 零基础"</td><td>臀桥为主，新手友好</td></tr>
+              <tr><td>10分钟臀腿燃脂</td><td>10min</td><td>B站"10分钟 臀腿 无器械"</td><td>动起来有氧+塑形</td></tr>
+              <tr><td>周六野翘臀训练</td><td>15min</td><td>B站"周六野 翘臀"</td><td>讲解清楚，动作标准</td></tr>
+              <tr><td>帕梅拉臀腿训练</td><td>10-20min</td><td>B站"帕梅拉 臀腿"</td><td>强度稍大，进阶用</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="plan-section">
+          <div class="plan-section-title">🏋️ 自主训练动作（5个经典动作）</div>
+          <table class="plan-table">
+            <thead><tr><th>动作</th><th>次数</th><th>要点</th></tr></thead>
+            <tbody>
+              <tr><td><strong>臀桥</strong></td><td>15次×4组</td><td>仰卧屈膝，脚跟距臀部一脚掌距离，臀部夹紧顶髋，顶峰停2秒，<strong>膝盖不要外翻</strong></td></tr>
+              <tr><td>单腿臀桥</td><td>每侧10次×3组</td><td>臀桥基础上抬起一条腿，更刺激臀大肌</td></tr>
+              <tr><td>跪姿后踢腿</td><td>每侧15次×3组</td><td>四足跪姿，单腿向后上方踢，感受臀部收缩</td></tr>
+              <tr><td>跪姿侧抬腿</td><td>每侧15次×3组</td><td>四足跪姿，单腿向侧面抬起，练臀中肌（改善臀凹陷）</td></tr>
+              <tr><td>深蹲</td><td>15次×3组</td><td>双脚与肩同宽，臀部后坐下蹲，膝盖不超过脚尖太多，背挺直</td></tr>
+            </tbody>
+          </table>
+          <div class="tip-box">
+            <strong>💡 练臀关键：</strong>
+            <ul>
+              <li><strong>发力感</strong>：动作时手摸臀部，应该感到肌肉收紧，而不是大腿前侧酸</li>
+              <li><strong>不要代偿</strong>：如果大腿前侧很酸说明发力错了，减小幅度重新找臀发力</li>
+              <li><strong>臀桥是王牌</strong>：对新手最友好，先把这个练好再加其他</li>
+              <li><strong>臀腿课第二天</strong>：臀会酸痛正常，可以改做瘦肚子课程让臀休息</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🌸</span>例假期适配版（7/24-7/30 当前使用）</span></div>
+        <div class="tip-box warn">
+          <strong>⚠️ 当前状态：例假期</strong>，前 3 天用此版本，第 4-7 天可逐步恢复正常版。
+          <ul>
+            <li><strong>避免</strong>：倒立、腹部挤压、高强度核心、跳跃、大重量臀腿</li>
+            <li><strong>推荐</strong>：呼吸练习、温和拉伸、散步、仰卧温和动作</li>
+            <li><strong>臀腿课</strong>：如果刚好碰到例假前3天，改成散步或跳过</li>
+          </ul>
+        </div>
+        <table class="plan-table">
+          <thead><tr><th>动作</th><th>时长</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>仰卧腹式呼吸</td><td>8分钟</td><td>核心练习，例假期也能做</td></tr>
+            <tr><td>肋间呼吸</td><td>5分钟</td><td>坐着或仰卧都行</td></tr>
+            <tr><td>温和猫牛式</td><td>5分钟</td><td>四足跪姿，缓慢活动脊椎，缓解腰酸</td></tr>
+            <tr><td>婴儿式拉伸</td><td>3分钟</td><td>跪姿臀部坐脚跟，手臂前伸，放松腰背</td></tr>
+            <tr><td>散步</td><td>20-30分钟</td><td>户外慢走，促进血液循环</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📋</span>减脂饮食原则（七分吃三分练）</span></div>
+        <table class="plan-table">
+          <thead><tr><th>原则</th><th>具体</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge b-green">多吃</span></td><td>鸡蛋、鸡胸肉、鱼、豆腐、瘦牛肉、蔬菜、粗粮（燕麦/糙米/红薯）</td></tr>
+            <tr><td><span class="badge b-yellow">少吃</span></td><td>白米饭白面条（换粗粮）、油炸、甜点、含糖饮料、奶茶</td></tr>
+            <tr><td><span class="badge b-danger">避免</span></td><td>节食、代餐、减肥药、单一饮食（会掉肌肉不掉脂肪）</td></tr>
+            <tr><td><span class="badge b-blue">例假期</span></td><td>补铁（红肉/菠菜/黑木耳）、温热饮食、适量红枣，不要刻意少吃</td></tr>
+            <tr><td><span class="badge b-purple">饮水</span></td><td>每天 1.5-2L，提升代谢</td></tr>
+          </tbody>
+        </table>
+        <div class="tip-box"><strong>📌 核心原则：</strong>不饿肚子，吃饱但吃对。<strong>体重不是重点，体脂率和围度才是</strong>。每周同一时间称一次+量腰围臀围，4周看趋势。</div>
+      </div>
+    </div>
+
+    <!-- 教程资源 -->
+    <div class="view" id="view-resource">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📚</span>科二第4章「中学生学习心理」干货</span></div>
+        <table class="plan-table">
+          <thead><tr><th>考点</th><th>关键概念</th><th>频率</th></tr></thead>
+          <tbody>
+            <tr><td>感觉 vs 知觉</td><td>感觉是个别属性，知觉是整体；知觉特性：整体性/选择性/理解性/恒常性</td><td><span class="badge b-purple">高频</span></td></tr>
+            <tr><td>记忆系统</td><td>瞬时→短时→长时；短时记忆容量 7±2</td><td><span class="badge b-purple">高频</span></td></tr>
+            <tr><td>遗忘规律</td><td>艾宾浩斯曲线：先快后慢；及时复习</td><td><span class="badge b-yellow">中频</span></td></tr>
+            <tr><td>思维特征</td><td>概括性、间接性</td><td><span class="badge b-yellow">中频</span></td></tr>
+            <tr><td><strong>行为主义学习理论</strong></td><td>桑代克：尝试错误说 / 巴甫洛夫：经典条件反射 / 斯金纳：操作性条件反射 / 班杜拉：观察学习理论</td><td><span class="badge b-danger">必考</span></td></tr>
+            <tr><td><strong>认知主义学习理论</strong></td><td>格式塔：完形说 / 苛勒：顿悟说 / 布鲁纳：认知-结构学习理论</td><td><span class="badge b-danger">必考</span></td></tr>
+            <tr><td><strong>建构主义学习理论</strong></td><td>皮亚杰源头，四要素：情境/协作/会话/意义建构</td><td><span class="badge b-purple">高频</span></td></tr>
+            <tr><td>人本主义学习理论</td><td>罗杰斯：有意义自由学习</td><td><span class="badge b-danger">必考</span></td></tr>
+            <tr><td>学习动机</td><td>马斯洛需要层次；耶克斯-多德森曲线；韦纳归因理论</td><td><span class="badge b-danger">必考</span></td></tr>
+            <tr><td>学习策略</td><td>认知策略（复述/精加工/组织）+ 元认知策略 + 资源管理策略</td><td><span class="badge b-yellow">中频</span></td></tr>
+            <tr><td>学习迁移</td><td>正/负迁移；顺向/逆向；一般/具体</td><td><span class="badge b-yellow">中频</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">📘</span>科一必背三观念（材料分析题必考）</span></div>
+        <div class="resource-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">教育观（素质教育的内涵）</div>
+            <div class="step-desc">①面向全体学生 ②促进学生全面发展 ③促进学生个性发展 ④以培养创新精神和实践能力为重点</div>
+          </div>
+        </div>
+        <div class="resource-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">学生观（"以人为本"的学生观）</div>
+            <div class="step-desc">①学生是发展的人 ②学生是独特的人 ③学生是具有独立意义的人</div>
+          </div>
+        </div>
+        <div class="resource-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">教师观（新课程下的教师观）</div>
+            <div class="step-desc">角色：①学习的促进者 ②教育教学的研究者 ③课程的建设者和开发者 ④社区型开放教师</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">🏊</span>零基础游泳 7 步教学</span></div>
+        <div class="resource-step"><div class="step-num">1</div><div class="step-content"><div class="step-title">水中行走 + 抱膝浮体</div><div class="step-desc">手扶池边慢走，脚底踩稳。深吸气后低头，下蹲抱膝漂浮5-10秒。</div></div></div>
+        <div class="resource-step"><div class="step-num">2</div><div class="step-content"><div class="step-title">憋气练习</div><div class="step-desc">嘴吸气→口鼻屏住→入水5-10秒→出水慢起。手可捏鼻子克服恐惧。</div></div></div>
+        <div class="resource-step"><div class="step-num">3</div><div class="step-content"><div class="step-title">蹬边滑行漂浮</div><div class="step-desc">背向池边，深吸气低头前倾俯卧，双脚蹬池边直漂。</div></div></div>
+        <div class="resource-step"><div class="step-num">4</div><div class="step-content"><div class="step-title">浮板蛙泳腿</div><div class="step-desc">手扶浮板，收→翻→蹬→夹→并，每组25米×5组。</div></div></div>
+        <div class="resource-step"><div class="step-num">5</div><div class="step-content"><div class="step-title">蛙泳划手（陆上+水中）</div><div class="step-desc">外划→内划→伸直。水中扶池边感受划水力度。</div></div></div>
+        <div class="resource-step"><div class="step-num">6</div><div class="step-content"><div class="step-title">手腿配合（先不换气）</div><div class="step-desc">手1次+腿1次+滑行2秒为一个周期。</div></div></div>
+        <div class="resource-step"><div class="step-num">7</div><div class="step-content"><div class="step-title">换气学习（普拉提基础扎实后）</div><div class="step-desc">外划抬头张嘴吸气，内划头入水闭气，伸直时水中呼气。</div></div></div>
+        <div class="resource-tip"><strong>💡 关键：</strong>每个阶段至少练2-3次再进入下一阶段。B站搜索"零基础学游泳""蛙泳教学 顺序"有大量免费教程。</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-left"><span class="card-icon">💄</span>化妆入门（基于你已有的工具）</span></div>
+        <div class="tip-box">
+          <strong>🎁 你已有的工具：</strong>
+          <ul>
+            <li>✅ 化妆刷（套装）</li>
+            <li>✅ 兰芝紫色隔离（紫色修正暗黄肤色，适合黄皮）</li>
+            <li>✅ 橘朵修容盘（修容+高光）</li>
+            <li>✅ 佩冉睫毛膏 + Kiss Me 睫毛膏（Kiss Me 是经典款，纤长持久）</li>
+            <li>✅ AKF 口红</li>
+            <li>✅ 睫毛夹（手动款）</li>
+            <li>🔄 想买电子睫毛夹（可选，下面有建议）</li>
+          </ul>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">🛒 还需要补的基础款</div>
+          <table class="plan-table">
+            <thead><tr><th>品类</th><th>推荐</th><th>预算</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><strong>粉底/BB霜</strong></td><td>美宝莲FitMe / 花玉集</td><td>80-120</td><td>你只有隔离，需要粉底液或BB霜做底妆</td></tr>
+              <tr><td><strong>遮瑕</strong></td><td>美宝莲橡皮擦 / 橘朵遮瑕</td><td>30-60</td><td>遮黑眼圈、痘印</td></tr>
+              <tr><td><strong>散粉/定妆粉</strong></td><td>纪梵希四宫格 / 花玉集</td><td>50-150</td><td>定妆必备，否则脱妆快</td></tr>
+              <tr><td><strong>眉笔</strong></td><td>花玉集 / 卡奇色彩</td><td>15-30</td><td>卡其色或灰色，新手首选</td></tr>
+              <tr><td><strong>眼影盘</strong></td><td>橘朵大地色盘</td><td>50-80</td><td>你已经用橘朵了，配个大地色眼影</td></tr>
+              <tr><td><strong>防晒</strong></td><td>碧柔 / 安耐晒</td><td>50-100</td><td>防晒是底妆第一步</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">📝 你的化妆流程（基于已有工具）</div>
+          <div class="resource-step"><div class="step-num">1</div><div class="step-content"><div class="step-title">防晒 → 兰芝紫色隔离</div><div class="step-desc">防晒等5分钟成膜 → 取黄豆大小紫色隔离，点在额头/鼻子/脸颊/下巴，用美妆蛋或手拍开。紫色修正暗黄，让肤色更亮。</div></div></div>
+          <div class="resource-step"><div class="step-num">2</div><div class="step-content"><div class="step-title">遮瑕（如有）→ 粉底/BB</div><div class="step-desc">遮瑕点涂黑眼圈、痘印，用指腹轻拍开（不要抹）。粉底少量多次，从脸中心向外推开。</div></div></div>
+          <div class="resource-step"><div class="step-num">3</div><div class="step-content"><div class="step-title">橘朵修容盘修容</div><div class="step-desc">阴影色打在颧骨下方、发际线、鼻梁两侧、下颌线。高光色打在鼻梁、颧骨上方、眉骨。<strong>少量多次</strong>，新手最容易画脏。</div></div></div>
+          <div class="resource-step"><div class="step-num">4</div><div class="step-content"><div class="step-title">散粉定妆</div><div class="step-desc">用散粉刷蘸取散粉，轻扫全脸，重点T区。这步不能省，否则2小时就脱妆。</div></div></div>
+          <div class="resource-step"><div class="step-num">5</div><div class="step-content"><div class="step-title">画眉</div><div class="step-desc">3点定眉形：眉头（鼻翼→内眼角）、眉峰（鼻翼→眼球外侧）、眉尾（鼻翼→外眼角）。用眉笔轻描，再刷匀。</div></div></div>
+          <div class="resource-step"><div class="step-num">6</div><div class="step-content"><div class="step-title">夹睫毛 → 刷睫毛膏</div><div class="step-desc">睫毛夹从根部夹10秒，再夹中段10秒，再夹尾部10秒（三段式）。<strong>Kiss Me 睫毛膏</strong>从根部Z字型向上刷，纤长持久不晕染。</div></div></div>
+          <div class="resource-step"><div class="step-num">7</div><div class="step-content"><div class="step-title">AKF 口红</div><div class="step-desc">先涂嘴唇内侧，用指腹向外晕开，自然过渡。如果是豆沙色百搭日常。</div></div></div>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">🔥 关于电子睫毛夹</div>
+          <div class="tip-box">
+            <strong>💡 客观建议：</strong>电子睫毛夹（加热款）适合<strong>睫毛硬、不容易夹翘的人</strong>。
+            <ul>
+              <li><strong>优点</strong>：加热定型，持久度好，不容易夹断睫毛</li>
+              <li><strong>缺点</strong>：价格 100-300，需要充电，新手掌握不好温度可能烫眼皮</li>
+              <li><strong>建议</strong>：先用手动睫毛夹练 2 周，如果发现睫毛夹不翘或很快就塌，再考虑入电子款。推荐品牌：Aemelia、纳米</li>
+              <li><strong>使用技巧</strong>：电子睫毛夹先预热1分钟，从睫毛根部停3秒，向上移动停3秒，不要拉扯</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="plan-section">
+          <div class="plan-section-title">📺 推荐学习资源</div>
+          <table class="plan-table">
+            <thead><tr><th>搜索关键词</th><th>能学到</th></tr></thead>
+            <tbody>
+              <tr><td>B站"紫色隔离 用法"</td><td>兰芝紫隔的正确用法</td></tr>
+              <tr><td>B站"新手修容 不画脏"</td><td>橘朵修容盘的量控和位置</td></tr>
+              <tr><td>B站"Kiss Me 睫毛膏 刷法"</td><td>不苍蝇腿的刷法</td></tr>
+              <tr><td>B站"新手底妆 不卡粉"</td><td>底妆手法</td></tr>
+              <tr><td>小红书"学生党化妆 流程"</td><td>完整步骤演示</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tip-box">
+          <strong>💡 你已经有的工具其实很不错！</strong>兰芝紫隔、橘朵修容、Kiss Me 睫毛膏都是口碑款。补齐粉底+遮瑕+散粉+眉笔+眼影就能开始完整练妆了。每天晚上学完习练15-20分钟，<strong>先练底妆+眉毛这两样</strong>，2周就能有明显进步。
+        </div>
+      </div>
+    </div>
+
+    <!-- 待办 -->
+    <div class="view" id="view-todo">
+      <div class="todo-layout">
+        <div class="card">
+          <div class="card-title"><span class="card-title-left"><span class="card-icon">✅</span>任务清单</span></div>
+          <div class="todo-input-row">
+            <input class="todo-input" id="todo-input" placeholder="添加任务，回车确认..." maxlength="80">
+            <select class="todo-select" id="todo-tag-select"><option value="subject1">科一</option><option value="subject2">科二</option><option value="life">生活</option><option value="other">其他</option></select>
+            <select class="todo-select" id="todo-priority-select"><option value="low">低</option><option value="mid" selected>中</option><option value="high">高</option></select>
+            <button class="btn btn-primary" id="todo-add-btn">添加</button>
+          </div>
+          <div class="todo-filter">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="active">未完成</button>
+            <button class="filter-btn" data-filter="done">已完成</button>
+            <button class="filter-btn" data-filter="subject1">科一</button>
+            <button class="filter-btn" data-filter="subject2">科二</button>
+          </div>
+          <div id="todo-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-left"><span class="card-icon">📊</span>今日进度</span></div>
+          <div class="progress-ring-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="60" fill="none" stroke="#e0d8c4" stroke-width="10"/>
+              <circle id="progress-ring" cx="70" cy="70" r="60" fill="none" stroke="#6b8e5a" stroke-width="10" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377" transform="rotate(-90 70 70)" style="transition:stroke-dashoffset 0.5s"/>
+            </svg>
+          </div>
+          <div class="progress-info"><div class="num" id="progress-num">0%</div><div class="lbl" id="progress-lbl">0 / 0 已完成</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日历 -->
+    <div class="view" id="view-calendar">
+      <div class="calendar-layout">
+        <div class="card">
+          <div class="calendar-header">
+            <div class="calendar-nav"><button class="cal-nav-btn" id="cal-prev">‹</button><div class="cal-title" id="cal-title"></div><button class="cal-nav-btn" id="cal-next">›</button></div>
+            <button class="btn btn-primary btn-sm" id="cal-today-btn">今天</button>
+          </div>
+          <div class="calendar-grid" id="cal-day-names"></div>
+          <div class="calendar-grid" id="cal-grid" style="margin-top:4px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-left"><span class="card-icon">📌</span><span id="event-date-title">日程</span></span></div>
+          <div class="event-form">
+            <input class="todo-input" id="event-title" placeholder="事件标题">
+            <input class="todo-input" id="event-time" type="time" value="09:00">
+            <button class="btn btn-primary btn-sm" id="event-add-btn">添加日程</button>
+          </div>
+          <div class="event-list" id="event-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 习惯 -->
+    <div class="view" id="view-habit">
+      <div class="habit-grid" id="habit-grid"></div>
+    </div>
+
+    <!-- 作息 -->
+    <div class="view" id="view-sleep">
+      <div class="sleep-layout">
+        <div class="card">
+          <div class="card-title"><span class="card-title-left"><span class="card-icon">😴</span>记录昨晚作息</span></div>
+          <div class="sleep-form">
+            <div class="sleep-field"><label>入睡时间</label><input class="sleep-input" id="sleep-bed" type="datetime-local"></div>
+            <div class="sleep-field"><label>起床时间</label><input class="sleep-input" id="sleep-wake" type="datetime-local"></div>
+            <button class="btn btn-primary" id="sleep-save-btn">保存记录</button>
+          </div>
+          <div class="sleep-target"><h4>🎯 当前阶段目标</h4><div class="target-row"><span>目标入睡</span><span id="target-bed">01:00</span></div><div class="target-row"><span>目标起床</span><span id="target-wake">09:00</span></div><div class="target-row"><span>最终目标</span><span>23:00 睡 / 07:30 起</span></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-left"><span class="card-icon">📊</span>近 14 天作息记录</span></div>
+          <div id="sleep-history"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 笔记 -->
+    <div class="view" id="view-notes">
+      <div class="notes-layout">
+        <div class="card notes-sidebar">
+          <div style="margin-bottom:10px"><button class="btn btn-primary btn-sm" id="note-new-btn" style="width:100%">+ 新建笔记</button></div>
+          <div id="notes-list"></div>
+        </div>
+        <div class="card notes-main">
+          <input class="note-title-input" id="note-title" placeholder="笔记标题">
+          <div class="note-meta" id="note-meta"></div>
+          <textarea class="note-content" id="note-content" placeholder="在这里记录知识点、灵感、备忘..."></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const STORE = {
+  get(key, def) { try { const v = localStorage.getItem('wb_'+key); return v ? JSON.parse(v) : def; } catch(e) { return def; } },
+  set(key, val) { localStorage.setItem('wb_'+key, JSON.stringify(val)); }
+};
+let todos = STORE.get('todos', []);
+let events = STORE.get('events', []);
+let notes = STORE.get('notes', []);
+let habits = STORE.get('habits', null);
+let sleepRecords = STORE.get('sleep', []);
+let studyRecords = STORE.get('study', {});
+let todayLogs = STORE.get('todayLogs', {});
+let swimLogs = STORE.get('swimLogs', {});
+let currentNoteId = null;
+let calCurrent = new Date();
+let calSelected = new Date();
+let todoFilter = 'all';
+const EXAM_DATE = new Date('2026-09-12');
+
+// 例假信息：7/24 开始，第3天是 7/26
+const PERIOD_START = new Date('2026-07-24');
+const PERIOD_END = new Date('2026-07-30'); // 7天
+const SWIM_RESUME_DATE = new Date('2026-08-03'); // 例假结束后第7天
+
+function getCurrentPhase() {
+  const now = new Date();
+  if (now < new Date('2026-08-11')) return 1;
+  if (now < new Date('2026-09-01')) return 2;
+  if (now < new Date('2026-09-08')) return 3;
+  return 4;
+}
+function getSleepTarget() {
+  const now = new Date();
+  if (now < new Date('2026-07-29')) return { bed: '01:00', wake: '09:00', phase: '当前' };
+  if (now < new Date('2026-08-05')) return { bed: '00:30', wake: '08:30', phase: '过渡1' };
+  if (now < new Date('2026-08-12')) return { bed: '23:30', wake: '08:00', phase: '过渡2' };
+  return { bed: '23:00', wake: '07:30', phase: '目标' };
+}
+function isInPeriod() {
+  const now = new Date();
+  return now >= PERIOD_START && now <= PERIOD_END;
+}
+function canSwim() {
+  return new Date() >= SWIM_RESUME_DATE;
+}
+
+function getTodayPlan() {
+  const sleep = getSleepTarget();
+  const wakeStr = sleep.wake;
+  const [wh, wm] = sleep.wake.split(':').map(Number);
+  const wakeMin = wh * 60 + wm;
+  const t = (offset) => {
+    const total = wakeMin + offset;
+    const h = Math.floor(total / 60) % 24;
+    const m = total % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  };
+  const phase = getCurrentPhase();
+  const inPeriod = isInPeriod();
+
+  if (phase === 1) {
+    const plan = [
+      { id: 't1', time: wakeStr, cat: 'life', title: '起床 · 早餐 · 见光', desc: '拉开窗帘，温水一杯，认真吃早餐' },
+      { id: 't2', time: t(30), cat: 'study', title: '科二 第4章 学习（重点）', desc: '中学生学习心理：学习理论+学习动机，配粉笔章节练习题' },
+      { id: 't3', time: t(150), cat: 'study', title: '科二 学习（续）', desc: '番茄钟 25min×4 推进第4章剩余部分' },
+      { id: 't4', time: t(210), cat: 'life', title: '午餐 + 休息', desc: '饭后小憩20分钟' },
+      { id: 't5', time: t(270), cat: 'study', title: '科一背诵', desc: '职业理念三观念（教育观/学生观/教师观）' },
+      { id: 't6', time: t(360), cat: 'study', title: '刷题时间', desc: '科二粉笔章节题 30 道，错题标记' },
+      { id: 't7', time: t(420), cat: 'sport', title: '运动时间', desc: '' },
+      { id: 't8', time: t(480), cat: 'life', title: '晚餐 + 休息', desc: '高蛋白饮食，避免精制碳水' },
+      { id: 't9', time: t(540), cat: 'skill', title: '化妆练习 15-20 分钟', desc: '当前阶段练底妆+眉毛' },
+      { id: 't10', time: t(570), cat: 'life', title: '呼吸练习 + 入睡准备', desc: '仰卧腹式呼吸 5-10 分钟' },
+      { id: 't11', time: sleep.bed, cat: 'life', title: '入睡', desc: '目标入睡时间，不碰手机' }
+    ];
+    // 根据例假状态调整运动项
+    const dow = new Date().getDay();
+    if (inPeriod) {
+      plan[6].desc = '例假期：温和普拉提（呼吸+拉伸），见"运动&普拉提"页';
+    } else if (dow === 4) {
+      plan[6].desc = '普拉提臀腿专项课 60min（小班课）';
+    } else if ([1, 3, 5].includes(dow) && canSwim()) {
+      plan[6].desc = '下午游泳 45 分钟（见"游泳任务"页）';
+    } else if (dow === 2) {
+      plan[6].desc = '居家瘦肚子课程 20min（见"运动&普拉提"页）';
+    } else if (dow === 6) {
+      plan[6].desc = '居家练臀课程 25min（见"运动&普拉提"页）';
+    } else {
+      plan[6].desc = '居家呼吸+拉伸 或 散步（见"运动&普拉提"页）';
+    }
+    return plan;
+  } else if (phase === 2) {
+    return [
+      { id: 't1', time: wakeStr, cat: 'life', title: '起床 · 早餐 · 见光', desc: '' },
+      { id: 't2', time: t(30), cat: 'study', title: '科二 全章复习', desc: '过重点章节关键词笔记' },
+      { id: 't3', time: t(150), cat: 'study', title: '科一背诵', desc: '职业道德+法律法规' },
+      { id: 't4', time: t(210), cat: 'life', title: '午餐 + 休息', desc: '' },
+      { id: 't5', time: t(270), cat: 'study', title: '刷题（科一+科二）', desc: '各一套章节题' },
+      { id: 't6', time: t(360), cat: 'sport', title: '运动', desc: '普拉提 / 游泳' },
+      { id: 't7', time: t(450), cat: 'life', title: '晚餐 + 休息', desc: '' },
+      { id: 't8', time: t(510), cat: 'skill', title: '化妆练习 20 分钟', desc: '' },
+      { id: 't9', time: t(540), cat: 'study', title: '主观题背诵', desc: '答题模板+高频考点' },
+      { id: 't10', time: t(600), cat: 'life', title: '呼吸练习 + 入睡', desc: '' }
+    ];
+  } else if (phase === 3) {
+    return [
+      { id: 't1', time: wakeStr, cat: 'life', title: '起床 · 早餐', desc: '' },
+      { id: 't2', time: t(30), cat: 'study', title: '真题套卷（上午场）', desc: '严格计时，模拟考试环境' },
+      { id: 't3', time: t(210), cat: 'life', title: '午餐 + 休息', desc: '' },
+      { id: 't4', time: t(270), cat: 'study', title: '对答案 + 错题复盘', desc: '每道错题回溯知识点' },
+      { id: 't5', time: t(390), cat: 'sport', title: '运动', desc: '轻松运动' },
+      { id: 't6', time: t(450), cat: 'life', title: '晚餐', desc: '' },
+      { id: 't7', time: t(510), cat: 'study', title: '查漏补缺', desc: '薄弱点专项突破' },
+      { id: 't8', time: t(600), cat: 'life', title: '呼吸 + 入睡', desc: '' }
+    ];
+  } else {
+    return [
+      { id: 't1', time: wakeStr, cat: 'life', title: '起床 · 早餐', desc: '平稳心态' },
+      { id: 't2', time: t(30), cat: 'study', title: '押题背诵', desc: '' },
+      { id: 't3', time: t(150), cat: 'life', title: '午餐 + 休息', desc: '' },
+      { id: 't4', time: t(210), cat: 'study', title: '保温练习', desc: '少量题保持手感' },
+      { id: 't5', time: t(300), cat: 'sport', title: '散步/拉伸', desc: '考前不剧烈运动' },
+      { id: 't6', time: t(360), cat: 'life', title: '晚餐', desc: '' },
+      { id: 't7', time: t(420), cat: 'study', title: '复盘笔记', desc: '看错题本' },
+      { id: 't8', time: t(540), cat: 'life', title: '呼吸 + 早睡', desc: '考前作息务必达标' }
+    ];
+  }
+}
+
+function getSwimTodayTasks() {
+  if (!canSwim()) {
+    return [{
+      id: 'sw0', title: '游泳暂停中', desc: `例假期间暂停游泳，${SWIM_RESUME_DATE.getMonth()+1}月${SWIM_RESUME_DATE.getDate()}日恢复。期间可在家做普拉提呼吸练习。`, isOptional: true
+    }];
+  }
+  const startDate = new Date('2026-08-03');
+  const now = new Date();
+  const days = Math.floor((now - startDate) / (1000*60*60*24));
+  const week = Math.floor(days / 7) + 1;
+  const dow = now.getDay();
+  const isSwimDay = [1, 3, 5].includes(dow);
+  if (!isSwimDay) {
+    return [{ id: 'sw0', title: '今天不是游泳日', desc: '游泳安排在周一/三/五下午，今天可在家加练呼吸法', isOptional: true }];
+  }
+  const weekContent = {
+    1: [
+      { id: 'sw1-1', title: '水中行走 5 分钟', desc: '手扶池边慢走，脚底踩稳' },
+      { id: 'sw1-2', title: '抱膝浮体 5 次', desc: '深蹲抱膝漂浮 5-10 秒' },
+      { id: 'sw1-3', title: '憋气练习', desc: '吸气→屏住→入水5-10秒→慢起' }
+    ],
+    2: [
+      { id: 'sw2-1', title: '蹬边滑行漂浮', desc: '深吸气低头前倾俯卧，蹬池边直漂' },
+      { id: 'sw2-2', title: '抬头滑行 5 次', desc: '脸部入水但眼睛向前看' }
+    ],
+    3: [
+      { id: 'sw3-1', title: '扶池边练蛙泳腿', desc: '收→翻→蹬→夹→并，20米×5组' },
+      { id: 'sw3-2', title: '扶浮板蛙泳腿', desc: '专注腿部，连续25米' }
+    ],
+    4: [
+      { id: 'sw4-1', title: '陆上蛙泳划手模拟', desc: '外划→内划→伸直，20次' },
+      { id: 'sw4-2', title: '水中扶池边划手', desc: '感受划水力度，20次' }
+    ],
+    5: [
+      { id: 'sw5-1', title: '手腿配合完整练习', desc: '不换气连续游15-25米×5组' },
+      { id: 'sw5-2', title: '观察呼吸节奏', desc: '记住：伸直时呼气、内划时准备抬头' }
+    ],
+    6: [
+      { id: 'sw6-1', title: '换气练习：早吸气法', desc: '外划抬头吸气，内划头入水闭气，伸直时水中呼气' },
+      { id: 'sw6-2', title: '尝试 10 米换气游', desc: '重点是节奏，不是距离' }
+    ],
+    7: [
+      { id: 'sw7-1', title: '连续换气游 50 米', desc: '分5组巩固' },
+      { id: 'sw7-2', title: '⚠️ 考前一周停止', desc: '避免受伤或疲劳影响考试' }
+    ]
+  };
+  return weekContent[week] || weekContent[7];
+}
+
+function initHabits() {
+  if (!habits) {
+    habits = [
+      { id: 'h1', name: '科二学习', emoji: '📗', target: '每日3小时', logs: {} },
+      { id: 'h2', name: '科一背诵', emoji: '📘', target: '每日1.5小时', logs: {} },
+      { id: 'h3', name: '刷题', emoji: '✏️', target: '每日30题', logs: {} },
+      { id: 'h4', name: '居家瘦腹/练臀', emoji: '💪', target: '每周2-3次', logs: {} },
+      { id: 'h5', name: '普拉提臀腿课', emoji: '🍑', target: '每周一次', logs: {} },
+      { id: 'h6', name: '游泳', emoji: '🏊', target: '周一/三/五下午', logs: {} },
+      { id: 'h7', name: '化妆练习', emoji: '💄', target: '每日15分钟', logs: {} },
+      { id: 'h8', name: '呼吸练习', emoji: '🌬️', target: '睡前5-10分钟', logs: {} },
+      { id: 'h9', name: '目标作息', emoji: '🌙', target: '按时睡按时起', logs: {} }
+    ];
+    STORE.set('habits', habits);
+  }
+}
+initHabits();
+
+const todayStr = () => dateStr(new Date());
+const dateStr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const tagLabel = { subject1: '科一', subject2: '科二', life: '生活', other: '其他' };
+const tagClass = { subject1: 'tag-subject1', subject2: 'tag-subject2', life: 'tag-life', other: 'tag-other' };
+const pLabel = { high: '高', mid: '中', low: '低' };
+const catClass = { study: 'cat-study', sport: 'cat-sport', skill: 'cat-skill', life: 'cat-life' };
+const catLabel = { study: '学习', sport: '运动', skill: '技能', life: '生活' };
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// 导航
+document.querySelectorAll('.nav-item').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.view).classList.add('active');
+    if (tab.dataset.view === 'today') renderToday();
+    if (tab.dataset.view === 'dashboard') renderDashboard();
+    if (tab.dataset.view === 'habit') renderHabits();
+    if (tab.dataset.view === 'swim') renderSwim();
+  };
+});
+
+function updateTopStats() {
+  const days = Math.ceil((EXAM_DATE - new Date()) / (1000*60*60*24));
+  document.getElementById('top-countdown').textContent = days + ' 天';
+  const today = todayStr();
+  const td = todos.filter(t => t.date === today);
+  const done = td.filter(t => t.done).length;
+  document.getElementById('top-todo').textContent = `${done}/${td.length}`;
+  document.getElementById('nav-todo-count').textContent = td.filter(t => !t.done).length;
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+  let weekHours = 0;
+  Object.entries(studyRecords).forEach(([d, subs]) => { if (new Date(d) >= weekStart) weekHours += (subs.subject1 || 0) + (subs.subject2 || 0); });
+  document.getElementById('top-study').textContent = weekHours.toFixed(1) + 'h';
+  let maxStreak = 0;
+  habits.forEach(h => { let s = 0; for (let i = 0; i < 90; i++) { const d = new Date(); d.setDate(d.getDate() - i); if (h.logs[dateStr(d)]) s++; else if (i > 0) break; } maxStreak = Math.max(maxStreak, s); });
+  document.getElementById('top-streak').textContent = maxStreak + ' 天';
+  document.getElementById('top-phase').textContent = ['','阶段一','阶段二','阶段三','阶段四'][getCurrentPhase()];
+}
+updateTopStats();
+setInterval(updateTopStats, 30000);
+
+// 今日
+function renderToday() {
+  const phase = getCurrentPhase();
+  const sleep = getSleepTarget();
+  const info = {
+    1: { name: '阶段一 · 基础冲刺', date: '7/25 - 8/10', focus: '科二学完剩余章节 + 科一开始背知识点 + 每日刷题' },
+    2: { name: '阶段二 · 强化刷题', date: '8/11 - 8/31', focus: '大量刷题 + 主观题背诵' },
+    3: { name: '阶段三 · 真题模拟', date: '9/1 - 9/7', focus: '近5年真题 + 错题复盘' },
+    4: { name: '阶段四 · 考前冲刺', date: '9/8 - 9/11', focus: '背押题 + 调整心态' }
+  };
+  document.getElementById('phase-tag').textContent = info[phase].name;
+  const now = new Date();
+  document.getElementById('today-title').textContent = `今日计划 · ${now.getMonth()+1}月${now.getDate()}日 周${['日','一','二','三','四','五','六'][now.getDay()]}`;
+  document.getElementById('today-summary').textContent = `当前作息 ${sleep.bed}睡 / ${sleep.wake}起（${sleep.phase}） · ${info[phase].focus}`;
+
+  // 例假提醒
+  const alertEl = document.getElementById('today-alert');
+  if (isInPeriod()) {
+    const dayOfPeriod = Math.floor((now - PERIOD_START) / (1000*60*60*24)) + 1;
+    alertEl.style.display = 'block';
+    alertEl.textContent = `🌸 例假第 ${dayOfPeriod} 天：游泳暂停，运动改为温和普拉提+拉伸，注意保暖和补铁。游泳将在 ${SWIM_RESUME_DATE.getMonth()+1}月${SWIM_RESUME_DATE.getDate()}日 恢复。`;
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  document.getElementById('phase-cards').innerHTML = [1,2,3,4].map(p => `
+    <div class="phase-card p${p} ${p===phase?'active':''}">
+      <div class="phase-name">${info[p].name}</div>
+      <div class="phase-date">${info[p].date}</div>
+      <div class="phase-focus">${info[p].focus}</div>
+    </div>
+  `).join('');
+
+  const plan = getTodayPlan();
+  const today = todayStr();
+  const logs = todayLogs[today] || {};
+  document.getElementById('today-timeline').innerHTML = plan.map(item => `
+    <div class="tl-item ${logs[item.id]?'done':''}" data-id="${item.id}">
+      <div class="tl-check ${logs[item.id]?'done':''}"></div>
+      <div class="tl-time">${item.time}</div>
+      <div class="tl-content">
+        <div class="tl-title">${item.title}</div>
+        ${item.desc ? `<div class="tl-desc">${item.desc}</div>` : ''}
+        <span class="tl-cat ${catClass[item.cat]}">${catLabel[item.cat]}</span>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.tl-item').forEach(el => {
+    el.onclick = () => {
+      const id = el.dataset.id;
+      if (!todayLogs[today]) todayLogs[today] = {};
+      if (todayLogs[today][id]) delete todayLogs[today][id];
+      else todayLogs[today][id] = true;
+      STORE.set('todayLogs', todayLogs);
+      renderToday();
+    };
+  });
+  updateTopStats();
+}
+document.getElementById('today-reset').onclick = () => { if (confirm('重置今日打卡？')) { delete todayLogs[todayStr()]; STORE.set('todayLogs', todayLogs); renderToday(); } };
+
+// 游泳
+function renderSwim() {
+  const alertEl = document.getElementById('swim-alert');
+  if (!canSwim()) {
+    alertEl.style.display = 'block';
+    alertEl.textContent = `🌸 游泳暂停中：例假期间不入水。${SWIM_RESUME_DATE.getMonth()+1}月${SWIM_RESUME_DATE.getDate()}日 恢复，安排在周一/三/五下午。`;
+  } else {
+    alertEl.style.display = 'none';
+  }
+  const tasks = getSwimTodayTasks();
+  const today = todayStr();
+  const logs = swimLogs[today] || {};
+  document.getElementById('swim-today-tasks').innerHTML = tasks.map(task => `
+    <div class="tl-item ${logs[task.id]?'done':''}" data-id="${task.id}" style="${task.isOptional?'opacity:0.7':''}">
+      <div class="tl-check ${logs[task.id]?'done':''}"></div>
+      <div class="tl-content">
+        <div class="tl-title">${task.title}</div>
+        ${task.desc ? `<div class="tl-desc">${task.desc}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('#swim-today-tasks .tl-item').forEach(el => {
+    el.onclick = () => {
+      const id = el.dataset.id;
+      if (!swimLogs[today]) swimLogs[today] = {};
+      if (swimLogs[today][id]) delete swimLogs[today][id];
+      else swimLogs[today][id] = true;
+      STORE.set('swimLogs', swimLogs);
+      renderSwim();
+    };
+  });
+
+  const weekPlans = [
+    { w: 1, title: '第1周 水感适应', d: '8/3 - 8/9', points: ['水中行走', '抱膝浮体', '憋气练习'] },
+    { w: 2, title: '第2周 滑行漂浮', d: '8/10 - 8/16', points: ['蹬边滑行', '抬头滑行', '抓池边漂浮'] },
+    { w: 3, title: '第3周 蛙泳腿', d: '8/17 - 8/23', points: ['陆上模拟', '扶池边蛙泳腿', '浮板蛙泳腿25m'] },
+    { w: 4, title: '第4周 蛙泳手', d: '8/24 - 8/30', points: ['陆上划手', '水中划手', '手腿分解'] },
+    { w: 5, title: '第5周 手腿配合', d: '8/31 - 9/6', points: ['不换气配合', '专注节奏', '能游15-25米'] },
+    { w: 6, title: '第6周 学换气', d: '9/7 - 9/13', points: ['普拉提基础扎实后', '早吸气法', '10米换气'] },
+    { w: 7, title: '考前停止', d: '9/8+', points: ['考前一周停止游泳', '避免受伤'] }
+  ];
+  document.getElementById('swim-week-plan').innerHTML = weekPlans.map(w => `
+    <div class="resource-step">
+      <div class="step-num">W${w.w}</div>
+      <div class="step-content">
+        <div class="step-title">${w.title} <span style="font-size:11px;color:var(--text-muted);margin-left:8px">${w.d}</span></div>
+        <div class="step-desc">${w.points.map(p => '• ' + p).join('　　')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+document.getElementById('swim-complete-all').onclick = () => {
+  const tasks = getSwimTodayTasks();
+  const today = todayStr();
+  if (!swimLogs[today]) swimLogs[today] = {};
+  tasks.forEach(t => swimLogs[today][t.id] = true);
+  STORE.set('swimLogs', swimLogs);
+  renderSwim();
+};
+
+// 待办
+function saveTodos() { STORE.set('todos', todos); }
+function renderTodos() {
+  let filtered = todos;
+  if (todoFilter === 'active') filtered = todos.filter(t => !t.done);
+  else if (todoFilter === 'done') filtered = todos.filter(t => t.done);
+  else if (['subject1','subject2','life','other'].includes(todoFilter)) filtered = todos.filter(t => t.tag === todoFilter);
+  const pOrder = { high: 0, mid: 1, low: 2 };
+  filtered.sort((a,b) => (a.done - b.done) || (pOrder[a.priority] - pOrder[b.priority]));
+  const list = document.getElementById('todo-list');
+  if (filtered.length === 0) list.innerHTML = '<div class="empty-state">暂无任务</div>';
+  else list.innerHTML = filtered.map(t => `
+    <div class="todo-item ${t.done?'done':''}" data-id="${t.id}">
+      <div class="todo-check ${t.done?'done':''}" data-action="toggle"></div>
+      <div class="todo-text">${escapeHtml(t.text)}</div>
+      <span class="todo-tag ${tagClass[t.tag]}">${tagLabel[t.tag]}</span>
+      <span class="todo-tag tag-priority p-${t.priority}">${pLabel[t.priority]}</span>
+      <span class="todo-delete" data-action="delete">✕</span>
+    </div>
+  `).join('');
+  updateTodoStats();
+}
+function updateTodoStats() {
+  const today = todayStr();
+  const td = todos.filter(t => t.date === today);
+  const dc = td.filter(t => t.done).length;
+  const total = td.length;
+  const pct = total ? Math.round(dc/total*100) : 0;
+  document.getElementById('progress-num').textContent = pct + '%';
+  document.getElementById('progress-lbl').textContent = `${dc} / ${total} 已完成`;
+  document.getElementById('progress-ring').style.strokeDashoffset = 377 - (377 * pct / 100);
+  updateTopStats();
+}
+document.getElementById('todo-add-btn').onclick = addTodo;
+document.getElementById('todo-input').addEventListener('keypress', e => { if (e.key === 'Enter') addTodo(); });
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const text = input.value.trim();
+  if (!text) return;
+  todos.unshift({ id: Date.now(), text, tag: document.getElementById('todo-tag-select').value, priority: document.getElementById('todo-priority-select').value, done: false, date: todayStr() });
+  input.value = ''; saveTodos(); renderTodos();
+}
+document.getElementById('todo-list').addEventListener('click', e => {
+  const item = e.target.closest('.todo-item');
+  if (!item) return;
+  const id = +item.dataset.id;
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return;
+  if (e.target.dataset.action === 'toggle') {
+    todo.done = !todo.done;
+    if (todo.done) todo.completedAt = new Date().toISOString();
+    saveTodos(); renderTodos();
+  } else if (e.target.dataset.action === 'delete') {
+    todos = todos.filter(t => t.id !== id);
+    saveTodos(); renderTodos();
+  }
+});
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    todoFilter = btn.dataset.filter;
+    renderTodos();
+  };
+});
+
+// 日历
+function renderCalendar() {
+  const y = calCurrent.getFullYear(), m = calCurrent.getMonth();
+  document.getElementById('cal-title').textContent = `${y}年${m+1}月`;
+  document.getElementById('cal-day-names').innerHTML = ['日','一','二','三','四','五','六'].map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  const first = new Date(y, m, 1);
+  const startDay = first.getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  let html = '';
+  for (let i = startDay - 1; i >= 0; i--) html += `<div class="cal-day other-month">${prevDays - i}</div>`;
+  const today = todayStr();
+  const selStr = dateStr(calSelected);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasEvent = events.some(e => e.date === ds);
+    const classes = ['cal-day'];
+    if (ds === today) classes.push('today');
+    if (ds === selStr) classes.push('selected');
+    if (hasEvent) classes.push('has-event');
+    html += `<div class="${classes.join(' ')}" data-date="${ds}">${d}</div>`;
+  }
+  const remain = (7 - (startDay + daysInMonth) % 7) % 7;
+  for (let d = 1; d <= remain; d++) html += `<div class="cal-day other-month">${d}</div>`;
+  document.getElementById('cal-grid').innerHTML = html;
+  document.querySelectorAll('.cal-day[data-date]').forEach(el => {
+    el.onclick = () => { calSelected = new Date(el.dataset.date); renderCalendar(); renderEvents(); };
+  });
+  renderEvents();
+}
+function renderEvents() {
+  const ds = dateStr(calSelected);
+  const d = new Date(ds);
+  document.getElementById('event-date-title').textContent = `${d.getMonth()+1}月${d.getDate()}日 日程`;
+  const dayEvents = events.filter(e => e.date === ds).sort((a,b) => a.time.localeCompare(b.time));
+  const list = document.getElementById('event-list');
+  if (dayEvents.length === 0) list.innerHTML = '<div class="event-empty">这天还没有日程</div>';
+  else {
+    list.innerHTML = dayEvents.map(e => `<div class="event-item"><span class="ev-del" data-id="${e.id}">✕</span><div class="ev-time">${e.time}</div><div class="ev-title">${escapeHtml(e.title)}</div></div>`).join('');
+    list.querySelectorAll('.ev-del').forEach(el => {
+      el.onclick = () => { events = events.filter(e => e.id !== +el.dataset.id); STORE.set('events', events); renderCalendar(); };
+    });
+  }
+}
+document.getElementById('cal-prev').onclick = () => { calCurrent.setMonth(calCurrent.getMonth()-1); renderCalendar(); };
+document.getElementById('cal-next').onclick = () => { calCurrent.setMonth(calCurrent.getMonth()+1); renderCalendar(); };
+document.getElementById('cal-today-btn').onclick = () => { calCurrent = new Date(); calSelected = new Date(); renderCalendar(); };
+document.getElementById('event-add-btn').onclick = () => {
+  const title = document.getElementById('event-title').value.trim();
+  const time = document.getElementById('event-time').value;
+  if (!title) return;
+  events.push({ id: Date.now(), title, time, date: dateStr(calSelected) });
+  STORE.set('events', events);
+  document.getElementById('event-title').value = '';
+  renderCalendar();
+};
+
+// 习惯
+function saveHabits() { STORE.set('habits', habits); }
+function renderHabits() {
+  const today = new Date();
+  const weekDates = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(today.getDate() - i); weekDates.push(dateStr(d)); }
+  const todayStr2 = dateStr(today);
+  const dayLabels = ['日','一','二','三','四','五','六'];
+  document.getElementById('habit-grid').innerHTML = habits.map(h => {
+    let streak = 0;
+    for (let i = 0; i < 90; i++) { const d = new Date(today); d.setDate(today.getDate() - i); if (h.logs[dateStr(d)]) streak++; else if (i > 0) break; }
+    const weekDone = weekDates.filter(d => h.logs[d]).length;
+    const weekPct = Math.round(weekDone / 7 * 100);
+    const daysHtml = weekDates.map(d => {
+      const done = h.logs[d];
+      const isToday = d === todayStr2;
+      const isFuture = new Date(d) > today;
+      const classes = ['habit-day'];
+      if (done) classes.push('done');
+      if (isToday) classes.push('today');
+      if (isFuture) classes.push('future');
+      const dd = new Date(d);
+      return `<div class="${classes.join(' ')}" data-date="${d}" data-habit="${h.id}"><div class="dn">${dayLabels[dd.getDay()]}</div>${dd.getDate()}</div>`;
+    }).join('');
+    return `
+      <div class="habit-card">
+        <div class="habit-head"><div class="habit-name">${h.emoji} ${h.name}</div><div class="habit-streak">🔥 ${streak} 天</div></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">目标：${h.target}</div>
+        <div class="habit-week">${daysHtml}</div>
+        <div class="habit-stat"><span>本周完成 ${weekDone}/7</span><span>${weekPct}%</span></div>
+      </div>
+    `;
+  }).join('');
+  document.querySelectorAll('.habit-day:not(.future)').forEach(el => {
+    el.onclick = () => {
+      const h = habits.find(x => x.id === el.dataset.habit);
+      const d = el.dataset.date;
+      if (h.logs[d]) delete h.logs[d];
+      else h.logs[d] = true;
+      saveHabits(); renderHabits(); updateTopStats();
+    };
+  });
+}
+
+// 作息
+function renderSleepHistory() {
+  const list = document.getElementById('sleep-history');
+  if (sleepRecords.length === 0) { list.innerHTML = '<div class="empty-state">还没有记录</div>'; return; }
+  const target = getSleepTarget();
+  document.getElementById('target-bed').textContent = target.bed;
+  document.getElementById('target-wake').textContent = target.wake;
+  const [tbh, tbm] = target.bed.split(':').map(Number);
+  const [twh, twm] = target.wake.split(':').map(Number);
+  const recent = sleepRecords.slice(-14).reverse();
+  list.innerHTML = recent.map(r => {
+    const bed = new Date(r.bed), wake = new Date(r.wake);
+    const dur = (wake - bed) / 3600000;
+    const bedStr = `${String(bed.getHours()).padStart(2,'0')}:${String(bed.getMinutes()).padStart(2,'0')}`;
+    const wakeStr = `${String(wake.getHours()).padStart(2,'0')}:${String(wake.getMinutes()).padStart(2,'0')}`;
+    const bedOk = bed.getHours()*60+bed.getMinutes() <= tbh*60+tbm+15;
+    const wakeOk = wake.getHours()*60+wake.getMinutes() <= twh*60+twm+15;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text-dim);min-width:80px">${r.date}</div>
+        <div style="font-size:13px">${bedStr} → ${wakeStr}</div>
+        <div style="font-size:13px;font-weight:600;min-width:50px">${dur.toFixed(1)}h</div>
+        <div style="font-size:11px">${bedOk&&wakeOk?'<span style="color:var(--success)">达标</span>':'<span style="color:var(--warning)">未达标</span>'}</div>
+      </div>
+    `;
+  }).join('');
+}
+document.getElementById('sleep-save-btn').onclick = () => {
+  const bed = document.getElementById('sleep-bed').value;
+  const wake = document.getElementById('sleep-wake').value;
+  if (!bed || !wake) return;
+  const bedDate = new Date(bed);
+  const wakeDate = new Date(wake);
+  const dateKey = dateStr(wakeDate);
+  sleepRecords = sleepRecords.filter(r => r.date !== dateKey);
+  sleepRecords.push({ date: dateKey, bed: bedDate.toISOString(), wake: wakeDate.toISOString() });
+  sleepRecords.sort((a,b) => new Date(a.date) - new Date(b.date));
+  STORE.set('sleep', sleepRecords);
+  document.getElementById('sleep-bed').value = '';
+  document.getElementById('sleep-wake').value = '';
+  renderSleepHistory();
+};
+
+// 笔记
+function saveNotes() { STORE.set('notes', notes); }
+function renderNotesList() {
+  const list = document.getElementById('notes-list');
+  if (notes.length === 0) { list.innerHTML = '<div class="empty-state" style="padding:20px">还没有笔记</div>'; return; }
+  const sorted = [...notes].sort((a,b) => new Date(b.updated) - new Date(a.updated));
+  list.innerHTML = sorted.map(n => `
+    <div class="note-item ${n.id === currentNoteId?'active':''}" data-id="${n.id}">
+      <div class="note-item-title">${escapeHtml(n.title || '无标题')}</div>
+      <div class="note-item-preview">${escapeHtml((n.content || '').slice(0, 40))}</div>
+      <div class="note-item-date">${new Date(n.updated).toLocaleString('zh-CN', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.note-item').forEach(el => {
+    el.onclick = () => { currentNoteId = +el.dataset.id; renderNotesList(); loadNote(); };
+  });
+}
+function loadNote() {
+  const n = notes.find(x => x.id === currentNoteId);
+  if (!n) { document.getElementById('note-title').value = ''; document.getElementById('note-content').value = ''; document.getElementById('note-meta').textContent = ''; return; }
+  document.getElementById('note-title').value = n.title;
+  document.getElementById('note-content').value = n.content;
+  document.getElementById('note-meta').textContent = `更新于 ${new Date(n.updated).toLocaleString('zh-CN')}`;
+}
+document.getElementById('note-new-btn').onclick = () => {
+  const n = { id: Date.now(), title: '', content: '', updated: new Date().toISOString() };
+  notes.unshift(n); currentNoteId = n.id;
+  saveNotes(); renderNotesList(); loadNote();
+  document.getElementById('note-title').focus();
+};
+let noteSaveTimer;
+['note-title','note-content'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    if (!currentNoteId) return;
+    clearTimeout(noteSaveTimer);
+    noteSaveTimer = setTimeout(() => {
+      const n = notes.find(x => x.id === currentNoteId);
+      if (n) {
+        n.title = document.getElementById('note-title').value;
+        n.content = document.getElementById('note-content').value;
+        n.updated = new Date().toISOString();
+        saveNotes(); renderNotesList();
+        document.getElementById('note-meta').textContent = `更新于 ${new Date(n.updated).toLocaleString('zh-CN')}`;
+      }
+    }, 400);
+  });
+});
+
+// 看板
+let charts = {};
+function destroyCharts() { Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} }); charts = {}; }
+function renderDashboard() {
+  destroyCharts();
+  const today = todayStr();
+  const td = todos.filter(t => t.date === today);
+  document.getElementById('stat-todo-today').textContent = td.length;
+  document.getElementById('stat-todo-sub').textContent = `已完成 ${td.filter(t => t.done).length}`;
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+  let weekHours = 0;
+  Object.entries(studyRecords).forEach(([d, subs]) => { if (new Date(d) >= weekStart) weekHours += (subs.subject1 || 0) + (subs.subject2 || 0); });
+  document.getElementById('stat-study-week').innerHTML = weekHours.toFixed(1) + '<span style="font-size:14px">h</span>';
+  let maxStreak = 0;
+  habits.forEach(h => { let s = 0; for (let i = 0; i < 90; i++) { const d = new Date(); d.setDate(d.getDate() - i); if (h.logs[dateStr(d)]) s++; else if (i > 0) break; } maxStreak = Math.max(maxStreak, s); });
+  document.getElementById('stat-streak').innerHTML = maxStreak + '<span style="font-size:14px">天</span>';
+  const recent7 = sleepRecords.slice(-7);
+  let sleepOkCnt = 0;
+  const target = getSleepTarget();
+  const [tbh, tbm] = target.bed.split(':').map(Number);
+  const [twh, twm] = target.wake.split(':').map(Number);
+  recent7.forEach(r => {
+    const bed = new Date(r.bed), wake = new Date(r.wake);
+    const bedOk = bed.getHours()*60+bed.getMinutes() <= tbh*60+tbm+15;
+    const wakeOk = wake.getHours()*60+wake.getMinutes() <= twh*60+twm+15;
+    if (bedOk && wakeOk) sleepOkCnt++;
+  });
+  const sleepPct = recent7.length ? Math.round(sleepOkCnt/recent7.length*100) : 0;
+  document.getElementById('stat-sleep').innerHTML = sleepPct + '<span style="font-size:14px">%</span>';
+  document.getElementById('stat-sleep-sub').textContent = `近7天 ${sleepOkCnt}/${recent7.length} 达标`;
+
+  Chart.defaults.color = '#8a7f6a';
+  Chart.defaults.borderColor = '#e0d8c4';
+  Chart.defaults.font.family = '-apple-system, sans-serif';
+
+  const labels14 = [], studyData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    labels14.push(`${d.getMonth()+1}/${d.getDate()}`);
+    const rec = studyRecords[dateStr(d)] || {};
+    studyData.push((rec.subject1 || 0) + (rec.subject2 || 0));
+  }
+  charts.study = new Chart(document.getElementById('chart-study'), {
+    type: 'line',
+    data: { labels: labels14, datasets: [{ label: '学习时长(h)', data: studyData, borderColor: '#6b8e5a', backgroundColor: 'rgba(107,142,90,0.15)', tension: 0.35, fill: true, pointRadius: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+  });
+  let s1 = 0, s2 = 0;
+  Object.values(studyRecords).forEach(s => { s1 += s.subject1 || 0; s2 += s.subject2 || 0; });
+  charts.subject = new Chart(document.getElementById('chart-subject'), {
+    type: 'doughnut',
+    data: { labels: ['科一', '科二'], datasets: [{ data: [s1, s2], backgroundColor: ['#6b8e5a', '#8a6daa'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+  });
+  const habitLabels = habits.map(h => h.name);
+  const habitData = habits.map(h => { let cnt = 0; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); if (h.logs[dateStr(d)]) cnt++; } return cnt; });
+  charts.habit = new Chart(document.getElementById('chart-habit'), {
+    type: 'bar',
+    data: { labels: habitLabels, datasets: [{ data: habitData, backgroundColor: ['#6b8e5a','#8a6daa','#c89545','#5a9aa8','#c4708a','#d18445','#5a9e6e','#c4654a'], borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 7 }, y: { grid: { display: false } } } }
+  });
+  const sleepLabels = [], bedData = [], wakeData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    sleepLabels.push(`${d.getMonth()+1}/${d.getDate()}`);
+    const rec = sleepRecords.find(r => r.date === dateStr(d));
+    if (rec) { const bed = new Date(rec.bed), wake = new Date(rec.wake); bedData.push(bed.getHours() + bed.getMinutes()/60); wakeData.push(wake.getHours() + wake.getMinutes()/60); }
+    else { bedData.push(null); wakeData.push(null); }
+  }
+  charts.sleep = new Chart(document.getElementById('chart-sleep'), {
+    type: 'line',
+    data: { labels: sleepLabels, datasets: [
+      { label: '入睡', data: bedData, borderColor: '#8a6daa', tension: 0.3, spanGaps: true, pointRadius: 3 },
+      { label: '起床', data: wakeData, borderColor: '#c89545', tension: 0.3, spanGaps: true, pointRadius: 3 }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: false, min: 0, max: 24 }, x: { grid: { display: false } } } }
+  });
+  const weekLabels = ['日','一','二','三','四','五','六'];
+  const todoDoneData = [0,0,0,0,0,0,0];
+  todos.forEach(t => { if (t.done && t.completedAt) { const d = new Date(t.completedAt); if (d >= weekStart) todoDoneData[d.getDay()]++; } });
+  charts.todo = new Chart(document.getElementById('chart-todo'), {
+    type: 'bar',
+    data: { labels: weekLabels, datasets: [{ label: '完成任务数', data: todoDoneData, backgroundColor: '#5a9e6e', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
+  });
+}
+
+// 初始化
+function setSleepDefaults() {
+  const now = new Date();
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1); yesterday.setHours(1, 0, 0, 0);
+  const today = new Date(now); today.setHours(9, 0, 0, 0);
+  document.getElementById('sleep-bed').value = yesterday.toISOString().slice(0,16);
+  document.getElementById('sleep-wake').value = today.toISOString().slice(0,16);
+}
+setSleepDefaults();
+renderTodos(); renderCalendar(); renderSleepHistory(); renderNotesList(); renderSwim();
+if (notes.length > 0) { currentNoteId = notes[0].id; renderNotesList(); loadNote(); }
+renderToday();
+
+if (todos.length === 0) {
+  todos = [
+    { id: 1, text: '科二第4章：中学生学习心理（学习理论+动机）', tag: 'subject2', priority: 'high', done: false, date: todayStr() },
+    { id: 2, text: '科二第4章粉笔配套章节练习题30道', tag: 'subject2', priority: 'high', done: false, date: todayStr() },
+    { id: 3, text: '科一背诵：教育观（材料题必考）', tag: 'subject1', priority: 'high', done: false, date: todayStr() },
+    { id: 4, text: '科一背诵：学生观（材料题必考）', tag: 'subject1', priority: 'high', done: false, date: todayStr() },
+    { id: 5, text: '居家运动：例假期温和版（呼吸+拉伸）', tag: 'life', priority: 'mid', done: false, date: todayStr() },
+    { id: 6, text: '游泳憋气脸盆练习5分钟（练嘴巴吸气）', tag: 'life', priority: 'mid', done: false, date: todayStr() },
+    { id: 7, text: '化妆练习15分钟（底妆+眉毛）', tag: 'life', priority: 'low', done: false, date: todayStr() },
+    { id: 8, text: '睡前呼吸练习5-10分钟', tag: 'life', priority: 'mid', done: false, date: todayStr() }
+  ];
+  saveTodos(); renderTodos();
+}
+if (notes.length === 0) {
+  notes = [
+    { id: 1, title: '教资备考总览', content: '## 9月12日 教资冲刺\n\n### 科目\n- 科一 综合素质（已学完，转背诵+刷题）\n- 科二 教育知识与能力（学到第4章 中学生学习心理）\n- 教材：粉笔教资系统班\n\n### 四阶段\n1. 阶段一 7/25-8/10 基础冲刺\n2. 阶段二 8/11-8/31 强化刷题\n3. 阶段三 9/1-9/7 真题模拟\n4. 阶段四 9/8-9/11 考前冲刺\n\n### 当前状态\n- 例假期：游泳暂停，温和运动\n- 普拉提：停了小班课，在家自学（重点呼吸）\n- 游泳：8/3 开始（例假后第7天）\n\n### 重要资源\n- 教程资源页（科二第4章干货、科一三观念）\n- 普拉提居家页（含例假版）', updated: new Date().toISOString() },
+    { id: 2, title: '科二第4章 学习理论', content: '## 中学生学习心理 · 学习理论\n\n### 行为主义\n- 桑代克：尝试错误说（猫开笼）\n- 巴甫洛夫：经典条件反射（铃声-唾液）\n- 斯金纳：操作性条件反射（强化理论）\n- 班杜拉：观察学习理论（自我效能感）\n\n### 认知主义\n- 格式塔：完形说\n- 苛勒：顿悟说（黑猩猩叠箱）\n- 布鲁纳：认知-结构学习理论\n- 奥苏贝尔：有意义接受学习\n\n### 建构主义\n- 皮亚杰源头，四要素：情境/协作/会话/意义建构\n\n### 人本主义\n- 罗杰斯：有意义自由学习', updated: new Date(Date.now() - 86400000).toISOString() },
+    { id: 3, title: '减脂 & 运动记录', content: '## 身体数据\n- 身高 163cm / 体重 62.5kg / 体脂 33.6%\n- 目标：3个月体脂降到28%（正常范围）\n- 重点：瘦肚子 + 练臀\n\n## 运动安排\n- 周一/三/五：游泳 45min（8/3起）\n- 周二：居家瘦肚子 20min\n- 周四：普拉提臀腿专项课 60min（小班）\n- 周六：居家练臀 25min\n- 周日：拉伸休息\n- 每天：睡前呼吸练习 5-10min\n\n## 化妆工具\n- 已有：化妆刷、兰芝紫隔、橘朵修容盘、佩冉/Kiss Me睫毛膏、AKF口红、睫毛夹\n- 待补：粉底/BB、遮瑕、散粉、眉笔、眼影、防晒\n\n## 例假记录\n- 7/24 来例假，7/30 结束\n- 8/3 恢复游泳', updated: new Date(Date.now() - 86400000).toISOString() }
+  ];
+  saveNotes();
+  currentNoteId = 1;
+  renderNotesList(); loadNote();
+}
+</script>
+<script>
+// 注册 Service Worker（PWA 离线支持）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('慧上岸 PWA 已就绪');
+    }).catch(err => console.log('SW 注册失败:', err));
+  });
+}
+</script>
+</body>
+</html>

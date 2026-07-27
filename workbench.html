@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>慧上岸版工作台</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="./chart.umd.min.js"></script>
 <!-- PWA 配置 -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#6b8e5a">
@@ -987,31 +987,66 @@
   .feed-card-content li { margin-bottom: 4px; }
   .feed-card-content strong { color: var(--primary-dim); }
 
-  /* 移动端:左侧栏改横向 */
+  /* 移动端:左侧栏始终在左侧(像小满原版) */
   @media (max-width: 768px) {
+    body {
+      flex-direction: row !important;
+    }
     .sidebar {
-      width: 100% !important;
-      max-height: 60px !important;
-      height: auto !important;
-      position: relative;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
+      width: 58px !important;
+      max-height: none !important;
+      height: 100vh !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      border-right: 1px solid var(--border);
+      border-bottom: none;
+      z-index: 100;
     }
-    .sidebar-logo { display: none; }
+    .sidebar-logo {
+      display: block;
+      padding: 14px 0 8px !important;
+    }
+    .sidebar-logo .logo { font-size: 12px; }
+    .sidebar-logo .sub { display: none; }
     .sidebar-nav {
-      flex-direction: row;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding: 8px 12px;
-      gap: 8px;
-      justify-content: flex-start;
-      max-height: 60px;
+      flex-direction: column;
+      padding: 8px 7px !important;
+      gap: 6px;
+      max-height: calc(100vh - 60px);
+      overflow-y: auto;
+      align-items: center;
     }
-    .sidebar-nav::-webkit-scrollbar { display: none; }
-    .nav-item { flex-shrink: 0; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px 16px; }
+    .sidebar-nav::-webkit-scrollbar { width: 0; }
+    .nav-item {
+      width: 40px !important;
+      height: 40px !important;
+      flex-shrink: 0;
+    }
+    .nav-item .icon { font-size: 18px; }
+    /* 主区域给左侧栏留出空间 */
+    .main {
+      margin-left: 58px !important;
+      width: calc(100% - 58px) !important;
+    }
+    .topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+    }
     .hero-title { font-size: 18px; }
-    .topbar-stats { gap: 16px; width: 100%; }
+    .topbar-stats { gap: 14px; width: 100%; overflow-x: auto; }
+    .top-stat { min-width: 70px; }
+    .top-stat .val { font-size: 17px; }
+    .content { padding: 14px 12px; }
+    .feed-card { padding: 14px 16px; }
+    .feed-card-title { font-size: 14px; }
+  }
+  @media (max-width: 480px) {
+    .nav-item { width: 38px !important; height: 38px !important; }
+    .sidebar { width: 52px !important; }
+    .main { margin-left: 52px !important; width: calc(100% - 52px) !important; }
   }
 
   </style>
@@ -1025,16 +1060,16 @@
     <div class="sub">成长工作台</div>
   </div>
   <nav class="sidebar-nav">
-    <button class="nav-item active" data-view="plan" title="总计划"><span class="icon">📋</span><span class="nav-label">总计划</span></button>
-    <button class="nav-item" data-view="today" title="今日"><span class="icon">📍</span><span class="nav-label">今日</span></button>
-    <button class="nav-item" data-view="todo" title="待办"><span class="icon">✅</span><span class="nav-label">待办</span><span class="badge-count" id="nav-todo-count">0</span></button>
-    <button class="nav-item" data-view="calendar" title="日历"><span class="icon">📅</span><span class="nav-label">日历</span></button>
-    <button class="nav-item" data-view="swim" title="游泳"><span class="icon">🏊</span><span class="nav-label">游泳</span></button>
-    <button class="nav-item" data-view="pilates" title="运动"><span class="icon">🧘</span><span class="nav-label">运动</span></button>
     <button class="nav-item" data-view="resource" title="教程"><span class="icon">📚</span><span class="nav-label">教程</span></button>
-    <button class="nav-item" data-view="dashboard" title="数据"><span class="icon">📊</span><span class="nav-label">数据</span></button>
+    <button class="nav-item active" data-view="today" title="今日"><span class="icon">📍</span><span class="nav-label">今日</span></button>
+    <button class="nav-item" data-view="todo" title="待办"><span class="icon">✅</span><span class="nav-label">待办</span><span class="badge-count" id="nav-todo-count">0</span></button>
+    <button class="nav-item" data-view="plan" title="总计划"><span class="icon">📋</span><span class="nav-label">总计划</span></button>
+    <button class="nav-item" data-view="calendar" title="日历"><span class="icon">📅</span><span class="nav-label">日历</span></button>
     <button class="nav-item" data-view="habit" title="打卡"><span class="icon">🔥</span><span class="nav-label">打卡</span></button>
     <button class="nav-item" data-view="sleep" title="作息"><span class="icon">😴</span><span class="nav-label">作息</span></button>
+    <button class="nav-item" data-view="swim" title="游泳"><span class="icon">🏊</span><span class="nav-label">游泳</span></button>
+    <button class="nav-item" data-view="pilates" title="运动"><span class="icon">🧘</span><span class="nav-label">运动</span></button>
+    <button class="nav-item" data-view="dashboard" title="数据"><span class="icon">📊</span><span class="nav-label">数据</span></button>
     <button class="nav-item" data-view="notes" title="笔记"><span class="icon">📝</span><span class="nav-label">笔记</span></button>
   </nav>
   <div class="sidebar-footer">上岸 · 数据本地存储</div>
@@ -1069,7 +1104,7 @@
   <div class="content">
 
     <!-- 今日计划 -->
-    <div class="view" id="view-today">
+    <div class="view active" id="view-today">
       <div class="today-hero">
         <span class="phase-tag" id="phase-tag">阶段一 · 基础冲刺</span>
         <h2 id="today-title">今日计划</h2>
@@ -1106,7 +1141,7 @@
     </div>
 
     <!-- 总计划 -->
-    <div class="view active" id="view-plan">
+    <div class="view" id="view-plan">
       <!-- 每日推荐卡片流(韩系成长工作台风) -->
       <div class="daily-feed">
         <div class="feed-header">

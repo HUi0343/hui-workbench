@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>强制新版工作台</title>
+<style>
+body {
+  font-family: -apple-system, sans-serif;
+  padding: 20px;
+  background: #f5efe0;
+  color: #4a4338;
+  margin: 0;
+  min-height: 100vh;
+}
+h1 { color: #7fa66f; }
+.box { background: white; padding: 16px; border-radius: 12px; margin: 12px 0; border: 1px solid #e0d8c4; }
+.btn {
+  display: block; padding: 14px; background: #7fa66f; color: white;
+  border-radius: 10px; text-decoration: none; font-weight: 600;
+  text-align: center; margin: 8px 0; font-size: 14px;
+}
+.warn { background: #f5e0e0; border-color: #e8b4b4; }
+</style>
+</head>
+<body>
+<h1>🎯 强制进入新工作台</h1>
+
+<div class="box warn">
+<strong>⚠️ 为什么你还是看到旧版?</strong><br>
+你的浏览器用 <code>Service Worker</code> 把旧版 HTML/CSS 缓存到本地了。即使我推了新版,浏览器还是用缓存的旧版。
+</div>
+
+<div class="box">
+<strong>📌 解决方案:按以下3步操作</strong>
+<ol>
+<li>长按下方的「进入新版」按钮,选择「在新标签页打开」</li>
+<li>在新标签页打开后,先 <code>Ctrl+Shift+R</code> (电脑) 或长按刷新键(手机)</li>
+<li>看到新版后,把它添加到桌面</li>
+</ol>
+</div>
+
+<a class="btn" href="workbench.html?nocache=999" target="_blank">
+🚀 进入新版工作台
+</a>
+
+<div class="box">
+<strong>如果还不行,试试这些:</strong>
+<ul>
+<li>在手机设置里,清除 Via 浏览器的全部数据</li>
+<li>换一个浏览器(Chrome / 夸克)</li>
+<li>用 4G 网络(避开 WiFi 缓存)</li>
+</ul>
+</div>
+
+<div class="box" style="background: #d8e8cc;">
+<strong>✅ 验证方法:</strong><br>
+进入新版后,检查底部:
+<ul>
+<li>背景是 <code>浅米色 #f5efe0</code>(不是黑色)</li>
+<li>左侧栏在 <code>左边</code>(不是顶部)</li>
+<li>图标排序: 📚 教程 → 📍 今日 → ✅ 待办</li>
+</ul>
+</div>
+
+</body>
+</html>

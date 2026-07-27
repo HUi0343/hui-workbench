@@ -10,6 +10,30 @@
 <meta name="theme-color" content="#6b8e5a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<style>
+  /* 强制浅色主题,对抗系统暗色模式 */
+  :root { color-scheme: light !important; }
+  html { color-scheme: light !important; }
+  body { color-scheme: light !important; }
+</style>
+<style>
+  /* 对抗系统深色模式的反色滤镜 */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #f5efe0 !important;
+      --bg-card: #ffffff !important;
+      --text: #4a4338 !important;
+      --primary: #9bbd8c !important;
+      --border: #e0d8c4 !important;
+    }
+    body { 
+      background-color: #f5efe0 !important;
+      color: #4a4338 !important;
+    }
+  }
+</style>
 <meta name="apple-mobile-web-app-title" content="慧上岸">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" href="./icon-192.png">

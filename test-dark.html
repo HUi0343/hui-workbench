@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>暗色模式测试</title>
+<style>
+:root { color-scheme: light; }
+body { 
+  background: #f5efe0; 
+  color: #4a4338;
+  padding: 20px;
+  font-family: sans-serif;
+}
+.box {
+  background: white;
+  border: 2px solid #7fa66f;
+  padding: 20px;
+  margin: 10px 0;
+  border-radius: 12px;
+}
+.box-1 { background: white; color: #4a4338; }
+.box-2 { background: #f5efe0; color: #4a4338; }
+.box-3 { background: #7fa66f; color: white; }
+.box-4 { 
+  background-image: linear-gradient(135deg, #f5efe0, #d8e8cc);
+  color: #4a4338;
+}
+.box-5 {
+  background: rgba(255,255,255,0.95);
+  color: #4a4338;
+  backdrop-filter: blur(10px);
+}
+</style>
+</head>
+<body>
+<h1>🎨 暗色模式测试</h1>
+<p>看看下面 5 个盒子,哪个是浅色(正常),哪个是深色(被反色了)</p>
+
+<div class="box box-1">
+<strong>盒子 1: 纯白背景</strong><br>
+背景应该是白色,文字应该是深棕色
+</div>
+
+<div class="box box-2">
+<strong>盒子 2: 奶油色背景</strong><br>
+背景应该是浅米色 #f5efe0
+</div>
+
+<div class="box box-3">
+<strong>盒子 3: 抹茶绿背景</strong><br>
+背景应该是绿色,文字白色
+</div>
+
+<div class="box box-4">
+<strong>盒子 4: 渐变背景</strong><br>
+背景应该是浅米到浅绿的渐变
+</div>
+
+<div class="box box-5">
+<strong>盒子 5: 半透明白</strong><br>
+背景应该是半透明白色
+</div>
+
+<p style="margin-top:20px;font-size:12px;color:#888;">
+告诉我:哪个盒子是浅色的?哪个是深色的?这能帮我找到正确的解决方法
+</p>
+</body>
+</html>

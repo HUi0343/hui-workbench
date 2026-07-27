@@ -1065,6 +1065,49 @@
     .main { margin-left: 52px !important; width: calc(100% - 52px) !important; }
   }
 
+  
+  /* 习惯打卡 - 周日列 */
+  .habit-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin: 10px 0;
+  }
+  .habit-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 2px;
+  }
+  .habit-day:hover { border-color: var(--primary); }
+  .habit-day.done { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .habit-day.future { opacity: 0.4; cursor: not-allowed; }
+  .habit-day .dn { font-size: 9px; opacity: 0.7; }
+  .habit-day .dd { font-size: 12px; font-weight: 700; }
+  .habit-day.done .dn { color: rgba(255,255,255,0.85); }
+  .habit-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .habit-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
   </style>
 </head>
 <body>
